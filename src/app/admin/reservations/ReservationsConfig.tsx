@@ -156,7 +156,7 @@ export default function ReservationsConfig() {
                         </h3>
                         <p className="text-sm text-slate-500">Define las áreas de tu restaurante y cuántas personas caben en cada una.</p>
                     </div>
-                    <button onClick={addZone} className="btn-secondary text-xs flex items-center gap-2">
+                    <button onClick={addZone} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors text-xs flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Añadir Zona
                     </button>
                 </div>
@@ -213,7 +213,7 @@ export default function ReservationsConfig() {
                         </h3>
                         <p className="text-sm text-slate-500">Define cuándo aceptas reservas (Ej: Comidas de 13:00 a 16:00).</p>
                     </div>
-                    <button onClick={addShift} className="btn-secondary text-xs flex items-center gap-2">
+                    <button onClick={addShift} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded-lg transition-colors text-xs flex items-center gap-2">
                         <Plus className="w-4 h-4" /> Añadir Turno
                     </button>
                 </div>
@@ -316,7 +316,7 @@ export default function ReservationsConfig() {
                 <button
                     onClick={save}
                     disabled={saving}
-                    className="btn-primary flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-emerald-500/20"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Guardar Configuración

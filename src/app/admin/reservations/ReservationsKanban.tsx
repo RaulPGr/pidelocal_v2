@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import {
     DndContext,
     DragOverlay,
-    useDraggable,
     useDroppable,
     DragStartEvent,
     DragEndEvent,
@@ -12,7 +11,8 @@ import {
 } from "@dnd-kit/core";
 import {
     SortableContext,
-    verticalListSortingStrategy
+    verticalListSortingStrategy,
+    useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, Clock, X, User, Phone, Users, MessageSquare } from "lucide-react";
@@ -137,11 +137,15 @@ function DroppableColumn({ col, items }: { col: any, items: AdminReservation[] }
     );
 }
 
+
+
 function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: boolean }) {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: item.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
 
     const style = transform ? {
         transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
     } : undefined;
 
     return (
