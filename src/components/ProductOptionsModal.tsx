@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { ALLERGENS } from "@/lib/allergens";
 
 type OptionGroup = {
@@ -75,6 +76,9 @@ export default function ProductOptionsModal({ product, onConfirm, onClose }: Pro
     }
     return initial;
   });
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   function toggle(group: OptionGroup, optionId: string) {
     setSelected((prev) => {
@@ -169,163 +173,153 @@ export default function ProductOptionsModal({ product, onConfirm, onClose }: Pro
     });
   }
 
-  import { createPortal } from "react-dom";
+  if (!mounted) return null;
 
-  // ... (imports remain)
-
-  export default function ProductOptionsModal({ product, onConfirm, onClose }: Props) {
-    // ... (logic remains same)
-
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-
-    if (!mounted) return null;
-
-    return createPortal(
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-6 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="max-h-full w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
-          <div className="flex items-start gap-4 border-b px-5 py-4 bg-slate-50/50">
-            {product.image_url && (
-              <img src={product.image_url} alt={product.name} className="hidden h-20 w-20 rounded-xl object-cover sm:block shadow-sm" />
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-3 py-6 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="max-h-full w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
+        <div className="flex items-start gap-4 border-b px-5 py-4 bg-slate-50/50">
+          {product.image_url && (
+            <img src={product.image_url} alt={product.name} className="hidden h-20 w-20 rounded-xl object-cover sm:block shadow-sm" />
+          )}
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-slate-900">{product.name}</h2>
+            <p className="text-sm text-slate-500 font-medium">Precio base: {formatPrice(basePrice)}</p>
+            {Array.isArray(product.allergens) && product.allergens.length > 0 && (
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {product.allergens.map((algId) => {
+                  const alg = ALLERGENS.find((a) => a.id === algId);
+                  if (!alg) return null;
+                  const Icon = alg.icon;
+                  return (
+                    <div
+                      key={algId}
+                      title={alg.label}
+                      className="text-slate-500 bg-white p-1 rounded-md border border-slate-200 shadow-sm"
+                    >
+                      {/* @ts-ignore */}
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                  );
+                })}
+              </div>
             )}
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-slate-900">{product.name}</h2>
-              <p className="text-sm text-slate-500 font-medium">Precio base: {formatPrice(basePrice)}</p>
-              {Array.isArray(product.allergens) && product.allergens.length > 0 && (
-                <div className="flex gap-1.5 mt-2 flex-wrap">
-                  {product.allergens.map((algId) => {
-                    const alg = ALLERGENS.find((a) => a.id === algId);
-                    if (!alg) return null;
-                    const Icon = alg.icon;
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+            type="button"
+          >
+            <span className="sr-only">Cerrar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+          {normalizedGroups.map((group) => {
+            const picks = selected[group.id] || new Set();
+            const error = validation.errors[group.id];
+            const isSingle = group.selection_type === "single";
+            return (
+              <div key={group.id} className="bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden">
+                <div className="bg-slate-100/50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-bold text-slate-900">{group.name}</h3>
+                    {group.description && <p className="text-xs text-slate-500 mt-0.5">{group.description}</p>}
+                  </div>
+                  <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${group.is_required !== false || (group.min ?? 0) > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-600"}`}>
+                    {group.is_required !== false || (group.min ?? 0) > 0 ? "Obligatorio" : "Opcional"}
+                  </span>
+                </div>
+
+                <div className="p-3 space-y-2">
+                  {group.options.map((opt) => {
+                    const checked = picks.has(opt.id);
+                    const inputId = `${group.id}-${opt.id}`;
                     return (
-                      <div
-                        key={algId}
-                        title={alg.label}
-                        className="text-slate-500 bg-white p-1 rounded-md border border-slate-200 shadow-sm"
+                      <label
+                        key={opt.id}
+                        htmlFor={inputId}
+                        className={`group flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${checked
+                          ? "border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/20"
+                          : "border-slate-200 bg-white hover:border-emerald-300 hover:shadow-sm"
+                          }`}
                       >
-                        {/* @ts-ignore */}
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
+                        <div className="flex items-center gap-3">
+                          <div className={`flex items-center justify-center w-5 h-5 rounded-full border transition-all ${checked ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white border-slate-300"
+                            }`}>
+                            {isSingle ? (
+                              <div className={`w-2 h-2 rounded-full bg-white transition-opacity ${checked ? 'opacity-100' : 'opacity-0'}`} />
+                            ) : (
+                              <svg className={`w-3 h-3 transition-opacity ${checked ? 'opacity-100' : 'opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            )}
+                          </div>
+
+                          {/* Hidden actual input */}
+                          {isSingle ? (
+                            <input
+                              type="radio"
+                              id={inputId}
+                              name={group.id}
+                              checked={checked}
+                              onChange={() => toggle(group, opt.id)}
+                              className="sr-only"
+                            />
+                          ) : (
+                            <input
+                              type="checkbox"
+                              id={inputId}
+                              checked={checked}
+                              onChange={() => toggle(group, opt.id)}
+                              className="sr-only"
+                            />
+                          )}
+
+                          <span className={`font-medium transition-colors ${checked ? 'text-emerald-900' : 'text-slate-700'}`}>{opt.name}</span>
+                        </div>
+
+                        <span className={`text-sm font-semibold ${checked ? 'text-emerald-700' : 'text-slate-500'}`}>
+                          {opt.price_delta > 0 ? `+${formatPrice(opt.price_delta)}` : opt.price_delta < 0 ? `-${formatPrice(Math.abs(opt.price_delta))}` : ""}
+                        </span>
+                      </label>
                     );
                   })}
                 </div>
-              )}
+                {error && <div className="px-4 pb-3 pt-0"><p className="text-xs font-bold text-rose-500 flex items-center gap-1">⚠️ {error}</p></div>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-5 bg-white">
+          <div className="flex flex-col items-start">
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Final</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-slate-900">{formatPrice(finalPrice)}</span>
+              {optionTotal > 0 && <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">+{formatPrice(optionTotal)} extras</span>}
             </div>
+          </div>
+
+          <div className="flex gap-3 w-full sm:w-auto">
             <button
-              onClick={onClose}
-              className="p-2 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
               type="button"
+              onClick={onClose}
+              className="flex-1 sm:flex-none px-5 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
             >
-              <span className="sr-only">Cerrar</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={!validation.valid}
+              className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:shadow-none transition-all hover:scale-105 active:scale-95"
+            >
+              Añadir al Pedido
             </button>
           </div>
-
-          <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
-            {normalizedGroups.map((group) => {
-              const picks = selected[group.id] || new Set();
-              const error = validation.errors[group.id];
-              const isSingle = group.selection_type === "single";
-              return (
-                <div key={group.id} className="bg-slate-50/50 rounded-xl border border-slate-200 overflow-hidden">
-                  <div className="bg-slate-100/50 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-slate-900">{group.name}</h3>
-                      {group.description && <p className="text-xs text-slate-500 mt-0.5">{group.description}</p>}
-                    </div>
-                    <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${group.is_required !== false || (group.min ?? 0) > 0 ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-600"}`}>
-                      {group.is_required !== false || (group.min ?? 0) > 0 ? "Obligatorio" : "Opcional"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 space-y-2">
-                    {group.options.map((opt) => {
-                      const checked = picks.has(opt.id);
-                      const inputId = `${group.id}-${opt.id}`;
-                      return (
-                        <label
-                          key={opt.id}
-                          htmlFor={inputId}
-                          className={`group flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all ${checked
-                              ? "border-emerald-500 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500/20"
-                              : "border-slate-200 bg-white hover:border-emerald-300 hover:shadow-sm"
-                            }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`flex items-center justify-center w-5 h-5 rounded-full border transition-all ${checked ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white border-slate-300"
-                              }`}>
-                              {isSingle ? (
-                                <div className={`w-2 h-2 rounded-full bg-white transition-opacity ${checked ? 'opacity-100' : 'opacity-0'}`} />
-                              ) : (
-                                <svg className={`w-3 h-3 transition-opacity ${checked ? 'opacity-100' : 'opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                              )}
-                            </div>
-
-                            {/* Hidden actual input */}
-                            {isSingle ? (
-                              <input
-                                type="radio"
-                                id={inputId}
-                                name={group.id}
-                                checked={checked}
-                                onChange={() => toggle(group, opt.id)}
-                                className="sr-only"
-                              />
-                            ) : (
-                              <input
-                                type="checkbox"
-                                id={inputId}
-                                checked={checked}
-                                onChange={() => toggle(group, opt.id)}
-                                className="sr-only"
-                              />
-                            )}
-
-                            <span className={`font-medium transition-colors ${checked ? 'text-emerald-900' : 'text-slate-700'}`}>{opt.name}</span>
-                          </div>
-
-                          <span className={`text-sm font-semibold ${checked ? 'text-emerald-700' : 'text-slate-500'}`}>
-                            {opt.price_delta > 0 ? `+${formatPrice(opt.price_delta)}` : opt.price_delta < 0 ? `-${formatPrice(Math.abs(opt.price_delta))}` : ""}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {error && <div className="px-4 pb-3 pt-0"><p className="text-xs font-bold text-rose-500 flex items-center gap-1">⚠️ {error}</p></div>}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t px-6 py-5 bg-white">
-            <div className="flex flex-col items-start">
-              <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Final</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-slate-900">{formatPrice(finalPrice)}</span>
-                {optionTotal > 0 && <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">+{formatPrice(optionTotal)} extras</span>}
-              </div>
-            </div>
-
-            <div className="flex gap-3 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 sm:flex-none px-5 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={!validation.valid}
-                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:shadow-none transition-all hover:scale-105 active:scale-95"
-              >
-                Añadir al Pedido
-              </button>
-            </div>
-          </div>
         </div>
-      </div>,
-      document.body
-    );
-  }
+      </div>
+    </div>,
+    document.body
+  );
+}
