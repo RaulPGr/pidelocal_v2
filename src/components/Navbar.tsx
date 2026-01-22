@@ -1,7 +1,7 @@
 // src/components/Navbar.tsx
 "use client";
 
-import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCount, subscribe } from "@/lib/cart-storage";
 import { useSubscriptionPlan } from "@/context/SubscriptionPlanContext";
@@ -144,33 +144,18 @@ export default function NavBar() {
           {/* Admin link intentionally removed */}
         </div>
         {allowOrdering && (
-          <div className="group relative inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/20 sm:px-4 sm:py-2 sm:text-sm">
-            <button onClick={openDrawer} className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center rounded-full bg-white/20 p-1 transition group-hover:bg-white/30 sm:p-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
-                  <path d="M3 5h2l2.4 10.2a1 1 0 0 0 .98.8H17a1 1 0 0 0 .96-.72L21 8H7" />
-                  <circle cx="9" cy="20" r="1.5" />
-                  <circle cx="17" cy="20" r="1.5" />
-                </svg>
-              </span>
-              <span>Carrito</span>
-            </button>
+          <button
+            onClick={openDrawer}
+            className="group relative ml-2 flex items-center justify-center rounded-full bg-white/10 p-2 text-white/90 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 hover:text-white active:scale-95 sm:ml-4 sm:p-2.5 shadow-sm border border-white/5"
+            aria-label="Ver carrito"
+          >
+            <ShoppingBag className="h-5 w-5 sm:h-5 sm:w-5" />
             {count > 0 && (
-              <span className="absolute -right-3 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-xs font-bold text-white shadow-md pointer-events-none">
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-md ring-2 ring-black/10">
                 {count}
               </span>
             )}
-          </div>
+          </button>
         )}
       </nav>
     </header>
