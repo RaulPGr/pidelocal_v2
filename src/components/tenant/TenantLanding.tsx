@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { isPromotionActive, type Promotion as PromotionRule } from "@/lib/promotions";
+import { useReservation } from "@/context/ReservationContext";
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, ArrowRight, Star, ChefHat, Utensils, Map as MapIcon, ExternalLink, ShieldCheck } from "lucide-react";
 
 // NOTE: This component contains all the logic that was previously in src/app/page.tsx
@@ -80,6 +81,7 @@ export default function TenantLanding() {
     const [cfg, setCfg] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [highlightPromotion, setHighlightPromotion] = useState<PromotionRule | null>(null);
+    const { openReservationModal } = useReservation();
 
     useEffect(() => {
         (async () => {
@@ -206,7 +208,7 @@ export default function TenantLanding() {
                             Ver Carta
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
-                        <button onClick={() => document.getElementById('bento-grid')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all duration-300">
+                        <button onClick={openReservationModal} className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all duration-300">
                             Reserva / Info
                         </button>
                     </div>
