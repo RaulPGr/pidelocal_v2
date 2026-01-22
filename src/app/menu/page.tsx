@@ -15,6 +15,7 @@ import { Suspense } from 'react';
 import { MapPin, Clock, Phone, Star, ArrowDown, Search, ArrowRight, Instagram } from 'lucide-react';
 import { ALLERGENS } from '@/lib/allergens';
 import ReservationTrigger from '@/components/ReservationTrigger';
+import CategoryNav from '@/components/CategoryNav';
 
 type PageProps = { searchParams: Promise<{ [key: string]: string | string[] | undefined }> };
 
@@ -457,19 +458,14 @@ async function MenuContent({ searchParams }: PageProps) {
 
   // --- RENDER ---
 
-  const isEmpty = !visibleSections.some(s => {
-    const list = s.id === 'nocat' ? groups.get('nocat') : groups.get(Number(s.id));
-    return list && list.length > 0;
-  });
-
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans selection:bg-emerald-100 selection:text-emerald-900">
 
       {/* 1. Hero */}
       <Hero />
 
-      {/* 2. Sticky Nav */}
-      <StickyNav />
+      {/* 2. Sticky Nav (Replaced) */}
+      <CategoryNav sections={orderedSections} />
 
       {/* 3. Main Content */}
       <div id="menu-content" className="max-w-7xl mx-auto px-4 py-12 scroll-mt-24">
@@ -494,16 +490,16 @@ async function MenuContent({ searchParams }: PageProps) {
           </div>
         )}
 
-        <div className="space-y-16">
-          {visibleSections.map((section) => {
+        <div className="space-y-24">
+          {orderedSections.map((section) => {
             const list = section.id === 'nocat' ? groups.get('nocat') || [] : groups.get(Number(section.id)) || [];
             if (!list || list.length === 0) return null;
 
             return (
-              <section key={String(section.id)} className="scroll-mt-32">
+              <section key={String(section.id)} id={`cat-${section.id}`} className="scroll-mt-40 transition-all duration-500">
                 <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-3xl font-black text-slate-900 tracking-tight">{section.name}</h2>
-                  <div className="h-1 flex-1 bg-slate-200/50 rounded-full" />
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight pl-2 border-l-4 border-emerald-500">{section.name}</h2>
+                  <div className="h-px flex-1 bg-slate-100" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
