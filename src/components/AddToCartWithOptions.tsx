@@ -80,7 +80,10 @@ export default function AddToCartWithOptions({ product, disabled, disabledLabel 
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
         disabled={disabled}
         className={`mt-2 w-full rounded border px-3 py-1 text-sm ${disabled ? "cursor-not-allowed opacity-50" : "bg-emerald-600 text-white hover:bg-emerald-700"
           }`}
