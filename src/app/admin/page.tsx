@@ -84,6 +84,45 @@ async function getStats(slug: string) {
   };
 }
 
+async function getActivity(slug: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabase = createClient(url, key);
+
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('slug', slug)
+    .single();
+
+  if (!business) return [];
+
+  // Fetch recent orders
+  const { data: orders } = await supabase
+    .from('orders')
+    .select('id, created_at, customer_name, total')
+    .eq('business_id', business.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // Fetch recent reservations
+  const { data: reservations } = await supabase
+    .from('reservations')
+    .select('id, created_at, customer_name, party_size')
+    .eq('business_id', business.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // Unite and Sort
+  const combined = [
+    ...(orders || []).map(o => ({ type: 'order', date: o.created_at, ...o })),
+    ...(reservations || []).map(r => ({ type: 'reservation', date: r.created_at, ...r }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
+  return combined;
+}
+
 export default async function AdminDashboard(props: { searchParams: Promise<{ onboarding?: string }> }) {
   const sp = await props.searchParams;
   const forceOnboarding = sp.onboarding === 'true';
@@ -93,12 +132,10 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
 
   const slug = await getTenantSlug();
   const stats = slug ? await getStats(slug) : { sales: 0, orders: 0, reservations: 0, customers: 0 };
+  const activity = slug ? await getActivity(slug) : [];
 
   return (
     <div className="space-y-8 relative">
-      {/* Onboarding Trigger */}
-      {/* {showOnboarding && <OnboardingWizard business={business} />} */}
-
       <div>
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
         <p className="text-slate-500 mt-1">Visión general de tu negocio hoy.</p>
@@ -131,9 +168,32 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="glass-panel p-6 rounded-2xl min-h-[300px]">
           <h3 className="text-lg font-bold text-slate-800 mb-4">Actividad Reciente</h3>
-          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-            No hay actividad reciente
-          </div>
+          {activity.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+              No hay actividad reciente
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activity.map((item: any) => (
+                <div key={item.id + item.type} className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                  <div className={`p-2 rounded-lg ${item.type === 'order' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                    {item.type === 'order' ? <ShoppingBag className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-slate-800">
+                      {item.type === 'order' ? `Nuevo Pedido (${item.total} €)` : `Nueva Reserva (${item.party_size} pax)`}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {item.customer_name || 'Cliente'} • {new Date(item.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-400">
+                    {new Date(item.date).toLocaleDateString() === new Date().toLocaleDateString() ? 'Hoy' : new Date(item.date).toLocaleDateString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="glass-panel p-6 rounded-2xl min-h-[300px]">
