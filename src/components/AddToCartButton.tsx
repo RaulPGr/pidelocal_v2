@@ -5,6 +5,7 @@ import { useCart } from "@/context/CartContext";
 import { useSubscriptionPlan } from "@/context/SubscriptionPlanContext";
 import { useOrdersEnabled } from "@/context/OrdersEnabledContext";
 import { subscriptionAllowsOrders } from "@/lib/subscription";
+import { Trash2 } from "lucide-react";
 
 type Props = {
   product: { id: number | string; name: string; price: number; listPrice?: number; image_url?: string; category_id?: number | null };
