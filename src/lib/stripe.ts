@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-01-27.acacia', // Use latest or pinned version
+    apiVersion: '2025-10-29.clover' as any, // Updated to match installed types
     typescript: true,
 });
 
