@@ -19,9 +19,13 @@ export default function NavBar() {
   const ordersEnabled = useOrdersEnabled();
   const allowOrdering = subscriptionAllowsOrders(plan) && ordersEnabled;
   const allowReservations = subscriptionAllowsReservations(plan);
-  const { openDrawer } = useCart() as any;
+  const { state: { items }, openDrawer } = useCart();
   const { openReservationModal } = useReservation();
-  const [count, setCount] = useState(0);
+
+  const count = (items || []).reduce((acc, i) => acc + i.qty, 0);
+  const total = (items || []).reduce((acc, i) => acc + (i.price * i.qty), 0);
+  const formattedTotal = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(total);
+
   const [reservationsEnabled, setReservationsEnabled] = useState(false);
   const [hasPromotions, setHasPromotions] = useState(false);
   const [tenantSlug, setTenantSlug] = useState<string | null>(null);
@@ -39,15 +43,6 @@ export default function NavBar() {
       return null;
     }
   };
-
-  useEffect(() => {
-    if (!allowOrdering) {
-      setCount(0);
-      return;
-    }
-    const unsub = subscribe(() => setCount(getCount()));
-    return () => unsub();
-  }, [allowOrdering]);
 
   useEffect(() => {
     let active = true;
