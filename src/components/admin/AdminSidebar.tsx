@@ -76,13 +76,21 @@ export default function AdminSidebar() {
             )}>
                 <div className="flex flex-col h-full">
                     {/* Header */}
+                    {/* Header */}
                     <div className="p-6 border-b border-slate-100 flex-shrink-0">
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                            Admin Panel
-                        </h1>
-                        <p className="text-xs text-slate-400 font-medium tracking-wider uppercase mt-1">
-                            Management
-                        </p>
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-500/20">
+                                P
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
+                                    PideLocal
+                                </h1>
+                                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">
+                                    Manager
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Navigation */}
@@ -143,6 +151,12 @@ export default function AdminSidebar() {
                             <p className="text-sm font-bold text-emerald-600 capitalize">{plan}</p>
                         </div>
                         <LogoutButton className="w-full justify-start pl-3 text-rose-600 hover:bg-rose-50" />
+
+                        <div className="pt-2 flex justify-center">
+                            <p className="text-[10px] text-slate-300 font-medium">
+                                Powered by <span className="text-slate-400 font-bold">PideLocal</span> v2.0
+                            </p>
+                        </div>
                     </div>
                 </div>
             </aside>
