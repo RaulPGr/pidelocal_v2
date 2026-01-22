@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Check, Loader2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import clsx from "clsx";
-import { Reorder } from "framer-motion"; // If we want drag options later, for now simple list
+
 
 type OptionGroup = {
     id: string;
