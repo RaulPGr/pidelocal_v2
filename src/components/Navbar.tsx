@@ -143,12 +143,19 @@ export default function NavBar() {
         {allowOrdering && (
           <button
             onClick={openDrawer}
-            className="group relative ml-2 flex items-center justify-center rounded-full bg-white/10 p-2 text-white/90 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 hover:text-white active:scale-95 sm:ml-4 sm:p-2.5 shadow-sm border border-white/5"
+            className={`group relative ml-2 flex items-center justify-center rounded-full bg-white/10 text-white/90 backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 hover:text-white active:scale-95 shadow-sm border border-white/5 ${total > 0 ? "px-3 py-1.5 sm:px-4 sm:py-2" : "p-2 sm:p-2.5"
+              }`}
             aria-label="Ver carrito"
           >
             <ShoppingBag className="h-5 w-5 sm:h-5 sm:w-5" />
+            {total > 0 && (
+              <span className="ml-2 text-xs font-bold sm:text-sm tabular-nums tracking-tight">
+                {formattedTotal}
+              </span>
+            )}
             {count > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-md ring-2 ring-black/10">
+              <span className={`absolute bg-rose-500 text-[10px] font-bold text-white shadow-md ring-2 ring-black/10 flex items-center justify-center rounded-full ${total > 0 ? "-right-1 -top-1 h-4 w-4" : "-right-1.5 -top-1.5 h-5 w-5"
+                }`}>
                 {count}
               </span>
             )}
