@@ -1,0 +1,39 @@
+import { NextResponse, type NextRequest } from 'next/server';
+
+// Detecta el subdominio y lo guarda en una cookie 'x-tenant-slug'
+// No cambia rutas ni lógica: solo añade el contexto para RLS.
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl.clone();
+  const host = req.headers.get('host') || '';
+
+  // 1) Intentar subdominio: negocio.pidelocal.es -> negocio
+  let slug = '';
+  const hostname = host.split(':')[0];
+  const parts = hostname.split('.');
+  if (parts.length >= 3) {
+    slug = parts[0].toLowerCase();
+    if (slug === 'www' && parts.length >= 4) {
+      slug = parts[1].toLowerCase();
+    }
+  }
+  // 2) Si no hay subdominio (p.ej. previews de Vercel), aceptar ?tenant=
+  if (!slug) {
+    const q = (url.searchParams.get('tenant') || '').trim().toLowerCase();
+    if (q && /^[a-z0-9-_.]{1,120}$/.test(q)) slug = q;
+  }
+
+  const res = NextResponse.next();
+  if (slug) {
+    res.cookies.set('x-tenant-slug', slug, { path: '/', httpOnly: false });
+  }
+
+  // Pass pathname to layout for conditional rendering
+  res.headers.set('x-url', req.url);
+  res.headers.set('x-pathname', url.pathname);
+
+  return res;
+}
+
+export const config = {
+  matcher: ['/((?!_next|api/health|favicon.ico).*)'],
+};

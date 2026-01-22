@@ -1,0 +1,94 @@
+// src/app/api/settings/home/route.ts
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { cookies, headers } from 'next/headers';
+import { normalizeSubscriptionPlan } from '@/lib/subscription';
+
+function adminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createClient(url, service, { auth: { persistSession: false } });
+}
+
+function normalizeSlug(v: string | null | undefined): string {
+  const s = (v || '').trim().toLowerCase();
+  return s && /^[a-z0-9-_.]{1,120}$/.test(s) ? s : '';
+}
+
+export async function GET(req: Request) {
+  try {
+    // 1) Permite forzar el tenant con ?tenant= (útil en previews de Vercel)
+    let slug = '';
+    try { const u = new URL(req.url); slug = normalizeSlug(u.searchParams.get('tenant')); } catch { }
+    // 2) Si no viene por query, intenta cookie
+    if (!slug) {
+      const cookieStore = await cookies();
+      slug = normalizeSlug(cookieStore.get('x-tenant-slug')?.value);
+    }
+    // 3) Si tampoco, usa el subdominio del host
+    if (!slug) {
+      const hdrs = await headers();
+      const host = (hdrs.get('host') || '').split(':')[0];
+      const parts = host.split('.');
+      if (parts.length >= 3) slug = normalizeSlug(parts[0]);
+    }
+    if (!slug) return NextResponse.json({ ok: true, data: null });
+    const supa = adminClient();
+    const { data: biz, error } = await supa
+      .from('businesses')
+      .select('name, slogan, description, phone, whatsapp, email, address_line, city, postal_code, lat, lng, opening_hours, logo_url, hero_url, social, theme_config')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+    if (!biz) return NextResponse.json({ ok: true, data: null });
+
+    const hours = biz.opening_hours || null;
+    const subscription = normalizeSubscriptionPlan((biz as any)?.theme_config?.subscription);
+    const social = (biz.social as any) || {};
+    const ordersEnabled = social.orders_enabled !== false;
+    const resCapacity = Number(social.reservations_capacity ?? 0);
+    const resSlots = Array.isArray(social.reservations_slots) ? social.reservations_slots : null;
+    const resZones = Array.isArray(social.reservations_zones) ? social.reservations_zones : null;
+    const resLead = Number.isFinite(social.reservations_lead_hours) ? Number(social.reservations_lead_hours) : null;
+    const resMaxDays = Number.isFinite(social.reservations_max_days) ? Number(social.reservations_max_days) : null;
+    const resAuto = typeof social.reservations_auto_confirm === 'boolean' ? !!social.reservations_auto_confirm : null;
+    const resBlocked = Array.isArray(social.reservations_blocked_dates) ? social.reservations_blocked_dates : null;
+    const out = {
+      slug: slug,
+      business: { name: biz.name || null, slogan: biz.slogan || null, description: biz.description || null },
+      contact: {
+        phone: biz.phone || null,
+        whatsapp: biz.whatsapp || null,
+        email: biz.email || null,
+        address: [biz.address_line, biz.postal_code, biz.city].filter(Boolean).join(', ') || null,
+      },
+      hours: hours,
+      images: { logo: biz.logo_url || null, hero: biz.hero_url || null },
+      coords: biz.lat != null && biz.lng != null ? { lat: Number(biz.lat), lng: Number(biz.lng) } : null,
+      social: biz.social || null,
+      reservations: {
+        enabled: !!social.reservations_enabled,
+        email: social.reservations_email || biz.email || null,
+        capacity: resCapacity,
+        slots: resSlots,
+        zones: resZones,
+        lead_hours: resLead,
+        max_days: resMaxDays,
+        auto_confirm: resAuto,
+        blocked_dates: resBlocked,
+      },
+      orders: {
+        enabled: ordersEnabled,
+      },
+      theme: biz.theme_config || null,
+      subscription,
+    };
+    return NextResponse.json({ ok: true, data: out });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message || 'Error' }, { status: 500 });
+  }
+}

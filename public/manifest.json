@@ -1,0 +1,22 @@
+{
+    "name": "PideLocal Admin",
+    "short_name": "PideLocal",
+    "description": "Panel de gestión para tu restaurante - PideLocal",
+    "start_url": "/admin",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#f97316",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/images/pidelocal.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/images/pidelocal.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

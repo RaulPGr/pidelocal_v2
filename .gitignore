@@ -1,0 +1,25 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.env
+.env.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+.vercel/
+.DS_Store
+*.local
+# IDE
+.vscode/
+.idea/
+
+nul
+
+nul
+
+.vercel
+.env*.local

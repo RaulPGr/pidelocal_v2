@@ -1,0 +1,301 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import AddToCartButton from "@/components/AddToCartButton";
+import CartQtyActions from "@/components/CartQtyActions";
+import ProductOptionsModal from "@/components/ProductOptionsModal";
+import { useSubscriptionPlan } from "@/context/SubscriptionPlanContext";
+import { useOrdersEnabled } from "@/context/OrdersEnabledContext";
+import { subscriptionAllowsOrders } from "@/lib/subscription";
+import { addItem } from "@/lib/cart-storage";
+import { ALLERGENS } from "@/lib/allergens";
+
+function normalizeDays(arr: any): number[] {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((x) => Number((x && typeof x === 'object') ? (x as any).day : x))
+    .filter((n) => Number.isFinite(n) && n >= 1 && n <= 7);
+}
+
+function formatPrice(n: number) {
+  try { return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n); }
+  catch { return n.toFixed(2) + ' EUR'; }
+}
+
+type Props = { day: number; categories?: any[]; selectedCat?: string };
+
+export default function MenuClient({ day, categories: initialCats, selectedCat }: Props) {
+  const [products, setProducts] = useState<any[] | null>(null);
+  const [cats, setCats] = useState<any[] | null>(Array.isArray(initialCats) ? initialCats : null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [modalProduct, setModalProduct] = useState<any | null>(null);
+  const plan = useSubscriptionPlan();
+  const ordersEnabled = useOrdersEnabled();
+  const allowOrdering = subscriptionAllowsOrders(plan) && ordersEnabled;
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const abs = new URL('/api/products', window.location.origin);
+      abs.searchParams.set('day', String(day));
+      try {
+        const host = window.location.hostname;
+        const parts = host.split('.');
+        if (parts.length >= 3) abs.searchParams.set('tenant', parts[0]);
+
+        // FIX: Forward tenant param from URL if present (for localhost debugging)
+        const currentParams = new URLSearchParams(window.location.search);
+        const tParam = currentParams.get('tenant');
+        if (tParam) abs.searchParams.set('tenant', tParam);
+      } catch { }
+      fetch(String(abs), { cache: 'no-store', credentials: 'same-origin', mode: 'same-origin' as RequestMode })
+        .then(r => r.json())
+        .then(j => {
+          if (!alive) return;
+          setProducts(Array.isArray(j?.products) ? j.products : []);
+          if (!cats && Array.isArray(j?.categories)) setCats(j.categories);
+          setLoading(false);
+        })
+        .catch((e) => { if (alive) { setLoadError('No se pudo cargar la carta'); setProducts([]); setLoading(false); } });
+    } catch (e: any) {
+      if (alive) { setLoadError('No se pudo preparar la petición'); setProducts([]); setLoading(false); }
+    }
+    return () => { alive = false; };
+  }, [day]);
+
+  function closeModal() {
+    setModalProduct(null);
+  }
+
+  function handleOptionsConfirm(product: any, payload: { options: any[]; totalPrice: number; basePrice: number; optionTotal: number; variantKey: string }) {
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: payload.totalPrice,
+        image: product.image_url || undefined,
+        category_id: product.category_id ?? null,
+        options: payload.options.map((opt) => ({
+          optionId: opt.optionId,
+          name: opt.name,
+          groupName: opt.groupName,
+          price_delta: opt.price_delta,
+        })),
+        variantKey: payload.variantKey,
+        basePrice: payload.basePrice,
+        optionTotal: payload.optionTotal,
+      },
+      1
+    );
+    closeModal();
+  }
+
+  if (loading) {
+    return (
+      <div className="mb-6 text-center text-sm text-slate-600">Cargando carta...</div>
+    );
+  }
+  if (products == null) return null;
+  if (!products || products.length === 0) {
+    return loadError ? (
+      <div className="mb-6 rounded border border-yellow-200 bg-yellow-50 p-3 text-yellow-800 text-sm">{loadError}</div>
+    ) : null;
+  }
+
+  // Agrupar por categoría
+  const groups = new Map<number | 'nocat', any[]>();
+  for (const p of products) {
+    const cidNum = Number(p?.category_id);
+    const key: number | 'nocat' = Number.isFinite(cidNum) ? cidNum : 'nocat';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(p);
+  }
+  const orderedSections: Array<{ id: number | 'nocat'; name: string; sort_order?: number }>
+    = [...(cats || []), ...(groups.has('nocat') ? [{ id: 'nocat' as const, name: 'Otros', sort_order: 9999 }] : [])];
+  const visibleSections = orderedSections.filter((s) => {
+    if (!selectedCat) return true;
+    if (selectedCat === 'nocat') return s.id === 'nocat';
+    return String(s.id) === selectedCat;
+  });
+
+  return (
+    <>
+      {(() => {
+              <h2 className="mb-4 text-2xl md:text-3xl font-semibold tracking-wide border-b border-slate-200 pb-1" style={{ color: 'var(--menu-heading-color, #1f2937)' }}>Productos</h2>
+              <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((p: any) => {
+                  const pDays = normalizeDays(p.product_weekdays);
+                  const js = new Date().getDay();
+                  const today = ((js + 6) % 7) + 1;
+                  const canAddToday = p.available !== false && (pDays.includes(today) || pDays.length === 7);
+                  const out = !canAddToday;
+                  const disabledLabel = p.available === false
+                    ? 'Agotado'
+                    : (!canAddToday ? (() => {
+                      const names = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                      const sorted = [...pDays].sort((a, b) => a - b);
+                      if (sorted.length === 7) return undefined;
+                      if (sorted.length === 1) return `Solo disponible ${names[sorted[0]]}`;
+                      return `Solo disponible: ${sorted.map((d) => names[d]).join(', ')}`;
+                    })() : undefined);
+                  return (
+                    <li key={p.id} className={['relative overflow-hidden rounded border bg-white', out ? 'opacity-60' : ''].join(' ')}>
+                      {p.available === false && (
+                        <span className="absolute left-2 top-2 rounded bg-rose-600 px-2 py-0.5 text-xs font-semibold text-white shadow">Agotado</span>
+                      )}
+                      {allowOrdering && !(Array.isArray(p.option_groups) && p.option_groups.length > 0) && (
+                        <CartQtyActions productId={p.id} allowAdd={!out} />
+                      )}
+                      {p.image_url && (<img src={p.image_url} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />)}
+                      <div className="p-3">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                          <h3 className="text-base font-medium break-words">{p.name}</h3>
+                          <span className={['whitespace-nowrap font-semibold text-right sm:text-left', out ? 'text-slate-500 line-through' : 'text-emerald-700'].join(' ')}>
+                            {formatPrice(Number(p.price || 0))}
+                          </span>
+                        </div>
+                        {p.description && (<p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{p.description}</p>)}
+
+                        {/* DEBUG DATA V3 */}
+                        <div className="text-xs text-red-600 font-bold border-2 border-red-500 bg-yellow-100 p-1 mt-2">
+                          allergens: {JSON.stringify(p.allergens)} | Lib: {ALLERGENS.length}
+                        </div>
+
+                        {Array.isArray(p.allergens) && p.allergens.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-3">
+                            {p.allergens.map((algId: string) => {
+                              const alg = ALLERGENS.find(a => a.id === algId);
+                              if (!alg) return null;
+                              const Icon = alg.icon;
+                              return (
+                                <div key={algId} title={alg.label} className="flex items-center justify-center w-6 h-6 bg-slate-100 rounded-full text-slate-600 border border-slate-200">
+                                  <Icon className="w-3.5 h-3.5" />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {allowOrdering &&
+                          (Array.isArray(p.option_groups) && p.option_groups.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => setModalProduct(p)}
+                              disabled={out}
+                              className={`mt-2 w-full rounded border px-3 py-1 text-sm ${out ? "cursor-not-allowed opacity-50" : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                }`}
+                            >
+                              Personalizar y añadir
+                            </button>
+                          ) : (
+                            <AddToCartButton
+                              product={{ id: p.id, name: p.name, price: Number(p.price || 0), image_url: p.image_url || undefined, category_id: p.category_id ?? null }}
+                              disabled={out}
+                              disabledLabel={disabledLabel}
+                            />
+                          ))}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section >
+          );
+}
+return null;
+      }) ()}
+{
+  visibleSections.map((section) => {
+    const list = section.id === 'nocat'
+      ? (groups.get('nocat') || [])
+      : (groups.get(Number(section.id)) || []);
+    if (!list || list.length === 0) return null;
+    return (
+      <section key={String(section.id)} className="mb-10">
+        {!selectedCat && (
+          <h2 className="mb-4 text-2xl md:text-3xl font-semibold tracking-wide border-b border-slate-200 pb-1" style={{ color: 'var(--menu-heading-color, #1f2937)' }}>
+            {section.name}
+          </h2>
+        )}
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p: any) => {
+            const pDays = normalizeDays(p.product_weekdays);
+            const js = new Date().getDay();
+            const today = ((js + 6) % 7) + 1;
+            const canAddToday = p.available !== false && (pDays.includes(today) || pDays.length === 7);
+            const out = !canAddToday;
+            const disabledLabel = p.available === false
+              ? 'Agotado'
+              : (!canAddToday ? (() => {
+                const names = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                const sorted = [...pDays].sort((a, b) => a - b);
+                if (sorted.length === 7) return undefined;
+                if (sorted.length === 1) return `Solo disponible ${names[sorted[0]]}`;
+                return `Solo disponible: ${sorted.map((d) => names[d]).join(', ')}`;
+              })() : undefined);
+            return (
+              <li key={p.id} className={['relative overflow-hidden rounded border bg-white', out ? 'opacity-60' : ''].join(' ')}>
+                {p.available === false && (
+                  <span className="absolute left-2 top-2 rounded bg-rose-600 px-2 py-0.5 text-xs font-semibold text-white shadow">Agotado</span>
+                )}
+                {allowOrdering && !(Array.isArray(p.option_groups) && p.option_groups.length > 0) && (
+                  <CartQtyActions productId={p.id} allowAdd={!out} />
+                )}
+                {p.image_url && (<img src={p.image_url} alt={p.name} className="h-40 w-full object-cover" loading="lazy" />)}
+                <div className="p-3">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                    <h3 className="text-base font-medium break-words">{p.name}</h3>
+                    <span className={['whitespace-nowrap font-semibold text-right sm:text-left', out ? 'text-slate-500 line-through' : 'text-emerald-700'].join(' ')}>
+                      {formatPrice(Number(p.price || 0))}
+                    </span>
+                  </div>
+                  {p.description && (<p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">{p.description}</p>)}
+                  {allowOrdering &&
+                    (Array.isArray(p.option_groups) && p.option_groups.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setModalProduct(p)}
+                        disabled={out}
+                        className={`mt-2 w-full rounded border px-3 py-1 text-sm ${out ? "cursor-not-allowed opacity-50" : "bg-emerald-600 text-white hover:bg-emerald-700"
+                          }`}
+                      >
+                        Personalizar y añadir
+                      </button>
+                    ) : (
+                      <AddToCartButton
+                        product={{ id: p.id, name: p.name, price: Number(p.price || 0), image_url: p.image_url || undefined, category_id: p.category_id ?? null }}
+                        disabled={out}
+                        disabledLabel={disabledLabel}
+                      />
+                    ))}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    );
+  })
+}
+{
+  modalProduct && Array.isArray(modalProduct.option_groups) && modalProduct.option_groups.length > 0 && (
+    <ProductOptionsModal
+      product={{
+        id: modalProduct.id,
+        name: modalProduct.name,
+        price: Number(modalProduct.price || 0),
+        category_id: modalProduct.category_id ?? null,
+        option_groups: modalProduct.option_groups,
+        image_url: modalProduct.image_url,
+        allergens: modalProduct.allergens,
+      }}
+      onClose={closeModal}
+      onConfirm={(payload) => handleOptionsConfirm(modalProduct, payload)}
+    />
+  )
+}
+    </>
+  );
+}

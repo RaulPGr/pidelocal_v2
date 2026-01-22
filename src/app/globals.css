@@ -1,0 +1,207 @@
+/* ===== Tailwind directives ===== */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+   ===== PideLocal · Premium Theme System ===== 
+   Modern aesthetic with deep slates, vibrant accents, and glassmorphism.
+*/
+:root {
+  /* Default "Premium" Palette (Fallback if no tenant theme is loaded) */
+  --brand-ink: #0f172a;
+  /* Slate 900 */
+  --brand-muted: #64748b;
+  /* Slate 500 */
+
+  /* Backgrounds */
+  --brand-chalk-bg: #f8fafc;
+  /* Slate 50 */
+  --brand-paper-bg: #ffffff;
+
+  /* Accent Colors (Default: Vibrant Emerald & Orange Gradient) */
+  --brand-accent: #10b981;
+  /* Emerald 500 */
+  --brand-accent-700: #047857;
+  /* Emerald 700 */
+  --brand-secondary: #0f172a;
+  /* Slate 900 (for secondary actions) */
+
+  /* Semantic Colors */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Typography */
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-headings: 'Outfit', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Overlay / Glass defaults */
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+@layer base {
+
+  html,
+  body {
+    @apply antialiased scroll-smooth;
+    color: var(--brand-ink);
+    background-color: var(--brand-chalk-bg);
+    /* Fondo sutil tipo "mesh" para dar profundidad */
+    background-image:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+    background-attachment: fixed;
+    background-size: cover;
+    font-family: var(--font-body);
+  }
+
+  /* Si el tema es claro, usamos un gradiente más suave en gris/blanco */
+  :root[data-theme="light"] body {
+    background-image:
+      radial-gradient(at 100% 100%, rgb(241, 245, 249) 0, transparent 50%),
+      radial-gradient(at 0% 0%, rgb(255, 255, 255) 0, transparent 50%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight;
+    font-family: var(--font-headings);
+    color: var(--brand-ink);
+  }
+
+  a {
+    @apply transition-colors duration-200;
+    color: inherit;
+  }
+}
+
+@layer utilities {
+
+  /* --- Visual Effects --- */
+  .glass-panel {
+    @apply backdrop-blur-xl border border-white/30 shadow-2xl;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8));
+  }
+
+  .glass-input {
+    @apply bg-white/70 border border-slate-200/60 backdrop-blur-md focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-inner;
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  }
+
+  /* --- Brand Utilities --- */
+  .bg-brand-gradient {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95;
+    background: linear-gradient(135deg, var(--brand-accent), var(--brand-accent-700));
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-slate-500/10 border border-transparent hover:border-slate-100;
+  }
+
+  .pill-filter {
+    @apply rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 border border-transparent;
+  }
+
+  .pill-filter-active {
+    @apply bg-slate-900 text-white shadow-lg shadow-slate-900/20 scale-105;
+  }
+
+  .pill-filter-inactive {
+    @apply bg-white text-slate-600 hover:bg-slate-50 hover:shadow-md border-slate-100;
+  }
+}
+
+/* 
+   Compatibility Layer for Old Classes 
+   (Ensures nothing breaks immediately while we refactor) 
+*/
+.bg-brand-chalk {
+  background-color: var(--brand-chalk-bg);
+}
+
+.text-brand-ink {
+  color: var(--brand-ink);
+}
+
+.bg-brand-cream {
+  background-color: #ffffff;
+}
+
+/* Updated to cleaner white */
+.border-brand-crust {
+  border-color: #e2e8f0;
+}
+
+/* Subtle Slate 200 */
+
+/* Mappings for legacy color overrides */
+.bg-blue-600 {
+  background-color: var(--brand-accent) !important;
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: var(--brand-accent-700) !important;
+}
+
+.text-blue-600 {
+  color: var(--brand-accent) !important;
+}
+
+/* Override legacy app-navbar-bg to be modern if not set inline */
+body .app-navbar-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Contact List Icons (Preserved but styled better) */
+.contact-list>li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.contact-list>li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  background-color: var(--brand-muted);
+  mask-size: cover;
+  -webkit-mask-size: cover;
+}
+
+.contact-list>li:nth-child(1)::before {
+  /* Phone */
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>');
+}
+
+.contact-list>li:nth-child(2)::before {
+  /* Email */
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>');
+}
+
+.contact-list>li:nth-child(3)::before {
+  /* Location */
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>');
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>');
+}
