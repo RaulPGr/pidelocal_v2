@@ -188,7 +188,7 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
                     </p>
                   </div>
                   <span className="text-xs font-medium text-slate-400">
-                    {new Date(item.date).toLocaleDateString() === new Date().toLocaleDateString() ? 'Hoy' : new Date(item.date).toLocaleDateString()}
+                    {new Date(item.date).toLocaleDateString('es-ES') === new Date().toLocaleDateString('es-ES') ? 'Hoy' : new Date(item.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </span>
                 </div>
               ))}
