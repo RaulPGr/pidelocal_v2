@@ -162,7 +162,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                 {/* Header */}
                 <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
                     <div>
-                        <h2 className="font-bold text-lg">Reservar Mesa</h2>
+                        <h2 className="font-bold text-lg text-white">Reservar Mesa</h2>
                         <p className="text-xs text-slate-300">{businessName}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">

@@ -209,7 +209,7 @@ export default function TenantLanding() {
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
                         <button onClick={openReservationModal} className="px-8 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold text-lg hover:bg-white/20 transition-all duration-300">
-                            Reserva / Info
+                            Reserva
                         </button>
                     </div>
 
