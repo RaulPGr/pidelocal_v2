@@ -199,6 +199,16 @@ async function MenuContent({ searchParams }: PageProps) {
     groups.get(key)!.push(p);
   }
 
+  // Sort groups: Products with images first
+  for (const list of groups.values()) {
+    list.sort((a, b) => {
+      const aImg = !!a.image_url;
+      const bImg = !!b.image_url;
+      if (aImg === bImg) return 0;
+      return aImg ? -1 : 1;
+    });
+  }
+
   const orderedSections: Array<{ id: number | 'nocat'; name: string; sort_order?: number }>
     = [...(categories || []), ...(groups.has('nocat') ? [{ id: 'nocat' as const, name: 'Otros', sort_order: 9999 }] : [])];
 
