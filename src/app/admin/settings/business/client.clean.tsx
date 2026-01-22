@@ -564,6 +564,10 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
                 <Upload className="w-3 h-3" /> Subir Portada
                 <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && upload('hero', e.target.files[0])} />
               </label>
+              <p className="text-[10px] text-slate-400 text-center px-4">
+                Recomendado: <strong>1920x1080px</strong>. <br />
+                IMPORTANTE: Mantén tu logo o texto importante <strong>centrado</strong> en la imagen para que se vea bien en móviles.
+              </p>
             </div>
           </div>
         </div>

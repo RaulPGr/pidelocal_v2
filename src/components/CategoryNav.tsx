@@ -56,7 +56,7 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
     }, [sections]);
 
     return (
-        <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-y border-slate-200/50 shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-white/60">
+        <div className="sticky top-[64px] md:top-[72px] z-40 bg-white/90 backdrop-blur-xl border-y border-slate-200/50 shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-white/60">
             <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
                 {/* Scrollable Categories container */}
                 <div ref={navRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar mask-gradient-right flex-1 select-none">
