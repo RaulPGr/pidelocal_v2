@@ -37,12 +37,62 @@ async function getBusinessData() {
   return data;
 }
 
+// Helper to get start/end of day in a robust way could be needed, but for now we rely on server time or simple truncated strings matching UI logic
+async function getStats(slug: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabase = createClient(url, key);
+
+  // 1. Get Business ID
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('slug', slug)
+    .single();
+
+  if (!business) return { sales: 0, orders: 0, reservations: 0, customers: 0 };
+
+  const todayStr = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+  // 2. Counts
+  // Active Orders (Pending/Accepted/Cooking/Ready) created today
+  const { count: ordersCount } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .eq('business_id', business.id)
+    .gte('created_at', `${todayStr}T00:00:00`)
+    .lt('created_at', `${todayStr}T23:59:59`)
+    .neq('status', 'cancelled')
+    .neq('status', 'completed'); // "Active" implies not finished
+
+  // Reservations Today (Pending/Confirmed)
+  // We match the 'reserved_at' date part. Note: This assumes UTC or simplified matching.
+  // Ideally we filter by range. 
+  const { count: reservationsCount } = await supabase
+    .from('reservations')
+    .select('*', { count: 'exact', head: true })
+    .eq('business_id', business.id)
+    .gte('reserved_at', `${todayStr}T00:00:00`)
+    .lt('reserved_at', `${todayStr}T23:59:59`)
+    .in('status', ['pending', 'confirmed']);
+
+  return {
+    sales: 0, // TODO: Calc sales
+    orders: ordersCount || 0,
+    reservations: reservationsCount || 0,
+    customers: 0 // Keep 0 for now
+  };
+}
+
 export default async function AdminDashboard(props: { searchParams: Promise<{ onboarding?: string }> }) {
   const sp = await props.searchParams;
   const forceOnboarding = sp.onboarding === 'true';
 
   const business = await getBusinessData();
   const showOnboarding = forceOnboarding || (business && (!business.logo_url || !business.opening_hours));
+
+  const slug = await getTenantSlug();
+  const stats = slug ? await getStats(slug) : { sales: 0, orders: 0, reservations: 0, customers: 0 };
 
   return (
     <div className="space-y-8 relative">
@@ -63,12 +113,12 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
         />
         <DashboardCard
           title="Pedidos Activos"
-          value="0"
+          value={String(stats.orders)}
           icon={ShoppingBag}
         />
         <DashboardCard
           title="Reservas"
-          value="0"
+          value={String(stats.reservations)}
           icon={Calendar}
         />
         <DashboardCard
