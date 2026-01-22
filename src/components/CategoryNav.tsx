@@ -111,6 +111,27 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
         return () => observer.disconnect();
     }, [sections]);
 
+    // Auto-scroll nav to center active element
+    useEffect(() => {
+        if (!navRef.current) return;
+        const container = navRef.current;
+        const activeBtn = container.querySelector(`[data-cat-id="${activeId}"]`) as HTMLElement;
+
+        if (activeBtn) {
+            const containerWidth = container.clientWidth;
+            const btnLeft = activeBtn.offsetLeft;
+            const btnWidth = activeBtn.offsetWidth;
+
+            // Calculate center position
+            const scrollLeft = btnLeft - (containerWidth / 2) + (btnWidth / 2);
+
+            container.scrollTo({
+                left: scrollLeft,
+                behavior: "smooth"
+            });
+        }
+    }, [activeId]);
+
     // Auto focus when opening search
     useEffect(() => {
         if (isOpen && inputRef.current) {
@@ -139,6 +160,7 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
                     <div ref={navRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth px-2 select-none">
                         {/* "Todo" / Top Button */}
                         <button
+                            data-cat-id="all"
                             onClick={() => scrollToSection("all")}
                             className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 transform active:scale-95 flex-shrink-0 ${activeId === "all"
                                 ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20 scale-105"
@@ -154,6 +176,7 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
                             return (
                                 <button
                                     key={String(s.id)}
+                                    data-cat-id={s.id}
                                     onClick={() => scrollToSection(s.id)}
                                     className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 transform active:scale-95 flex-shrink-0 ${isActive
                                         ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20 scale-105"
