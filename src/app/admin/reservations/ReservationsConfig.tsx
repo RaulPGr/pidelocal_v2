@@ -258,7 +258,7 @@ export default function ReservationsConfig() {
                             <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
                                 <span className="text-xs font-bold text-slate-500 mr-2 uppercase">Días:</span>
                                 {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((dayLabel, idx) => {
-                                    const isSelected = s.days.includes(idx);
+                                    const isSelected = (s.days || []).includes(idx);
                                     return (
                                         <button
                                             key={idx}
