@@ -1,6 +1,7 @@
 // src/components/Navbar.tsx
 "use client";
 
+import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCount, subscribe } from "@/lib/cart-storage";
