@@ -19,15 +19,13 @@ export default function AddToCartButton({ product, disabled, disabledLabel }: Pr
   const allowOrdering = planAllows && ordersEnabled;
 
   const { state: { items }, addItem: addItemToCart, remove, dec } = useCart();
-  const [busy, setBusy] = useState(false);
 
   // Calculate specific quantity for this product
   const qty = items.filter(i => i.id === product.id).reduce((acc, i) => acc + i.qty, 0);
 
   async function onAdd() {
-    if (disabled || busy || !allowOrdering) return;
-    setBusy(true);
-    // Simulate tiny delay for feedback if needed, or just add
+    if (disabled || !allowOrdering) return;
+    // Instant add
     addItemToCart({
       id: product.id,
       name: product.name,
@@ -36,9 +34,6 @@ export default function AddToCartButton({ product, disabled, disabledLabel }: Pr
       image: product.image_url,
       category_id: product.category_id
     }, 1);
-
-    // Reset busy after short timeout to clean up or just immediately if sync
-    setTimeout(() => setBusy(false), 200);
   }
 
   function onDec(e: React.MouseEvent) {
@@ -55,14 +50,12 @@ export default function AddToCartButton({ product, disabled, disabledLabel }: Pr
     onAdd();
   }
 
-  const buttonDisabled = !!disabled || busy || !allowOrdering;
+  const buttonDisabled = !!disabled || !allowOrdering;
   const label = !allowOrdering
     ? (planAllows ? "Pedidos desactivados" : "No disponible tu plan")
     : disabled
       ? (disabledLabel || "Agotado")
-      : busy
-        ? "..."
-        : "Añadir";
+      : "Añadir";
 
   if (!buttonDisabled && qty > 0) {
     return (
