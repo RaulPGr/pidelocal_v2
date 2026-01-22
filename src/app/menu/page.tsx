@@ -432,6 +432,7 @@ async function MenuContent({ searchParams }: PageProps) {
                     id: p.id,
                     name: p.name,
                     price: effectivePrice,
+                    listPrice: effectivePrice < Number(p.price || 0) ? Number(p.price || 0) : undefined,
                     category_id: p.category_id ?? null,
                     option_groups: Array.isArray(p.option_groups) ? p.option_groups : [],
                     image_url: p.image_url || undefined,

@@ -24,6 +24,7 @@ type Product = {
   id: number | string;
   name: string;
   price: number;
+  listPrice?: number;
   image_url?: string | null;
   category_id?: number | null;
   option_groups?: OptionGroup[];
@@ -48,6 +49,7 @@ export default function AddToCartWithOptions({ product, disabled, disabledLabel 
           id: product.id,
           name: product.name,
           price: product.price,
+          listPrice: product.listPrice,
           image_url: product.image_url || undefined,
           category_id: product.category_id ?? null,
         }}
@@ -64,6 +66,7 @@ export default function AddToCartWithOptions({ product, disabled, disabledLabel 
         id: product.id,
         name: product.name,
         price: payload.totalPrice,
+        listPrice: product.listPrice ? product.listPrice + payload.optionTotal : undefined, // listPrice includes options too for fair comparison
         image: product.image_url || undefined,
         category_id: product.category_id ?? null,
         options: payload.options,

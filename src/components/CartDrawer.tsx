@@ -97,7 +97,17 @@ export default function CartDrawer() {
                                         <div>
                                             <div className="flex justify-between items-start">
                                                 <h3 className="text-base font-medium text-slate-900 line-clamp-2">{item.name}</h3>
-                                                <p className="ml-4 text-sm font-semibold text-slate-900">{formatPrice(item.price * item.qty)}</p>
+                                                <div className="flex flex-col items-end ml-4">
+                                                    {item.listPrice && item.listPrice > item.price ? (
+                                                        <>
+                                                            <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-full mb-0.5">PROMO</span>
+                                                            <span className="text-xs text-slate-400 line-through decoration-slate-300">{formatPrice(item.listPrice * item.qty)}</span>
+                                                            <span className="text-sm font-bold text-rose-600">{formatPrice(item.price * item.qty)}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-sm font-semibold text-slate-900">{formatPrice(item.price * item.qty)}</span>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Options / Customizations */}
