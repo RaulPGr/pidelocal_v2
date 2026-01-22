@@ -82,9 +82,9 @@ export default function CartDrawer() {
                                 <li key={item.id} className="flex gap-4">
                                     {/* Image (if available) */}
                                     <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 relative">
-                                        {item.image_url ? (
+                                        {item.image ? (
                                             <img
-                                                src={item.image_url}
+                                                src={item.image}
                                                 alt={item.name}
                                                 className="h-full w-full object-cover"
                                             />
@@ -99,7 +99,23 @@ export default function CartDrawer() {
                                                 <h3 className="text-base font-medium text-slate-900 line-clamp-2">{item.name}</h3>
                                                 <p className="ml-4 text-sm font-semibold text-slate-900">{formatPrice(item.price * item.qty)}</p>
                                             </div>
-                                            {/* Options/Modifiers would go here if we tracked them properly in display */}
+
+                                            {/* Options / Customizations */}
+                                            {Array.isArray(item.options) && item.options.length > 0 && (
+                                                <div className="mt-1 space-y-1">
+                                                    {item.options.map((opt: any, idx: number) => (
+                                                        <div key={idx} className="text-xs text-slate-500 flex justify-between">
+                                                            <span>
+                                                                <span className="font-medium text-slate-600">
+                                                                    {opt.groupName ? `${opt.groupName}: ` : ""}
+                                                                </span>
+                                                                {opt.name}
+                                                            </span>
+                                                            {opt.price_delta > 0 && <span>+{formatPrice(opt.price_delta)}</span>}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="flex items-center justify-between mt-2">
