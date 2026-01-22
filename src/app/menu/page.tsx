@@ -458,6 +458,11 @@ async function MenuContent({ searchParams }: PageProps) {
 
   // --- RENDER ---
 
+  const isEmpty = !orderedSections.some(s => {
+    const list = s.id === 'nocat' ? groups.get('nocat') : groups.get(Number(s.id));
+    return list && list.length > 0;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans selection:bg-emerald-100 selection:text-emerald-900">
 
