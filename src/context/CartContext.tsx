@@ -47,7 +47,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (item: any, qty = 1) => {
     // Delegate to lib
     addItemLib(item, qty);
-    setIsOpen(true);
+    // Formerly auto-opened drawer. Now disabled to allow multiple adds without disruption.
+    // setIsOpen(true); 
   };
 
   const inc = (id: string | number) => {
