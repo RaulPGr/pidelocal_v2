@@ -263,9 +263,10 @@ async function MenuContent({ searchParams }: PageProps) {
 
       <div className="relative z-10 text-center px-4 flex flex-col items-center gap-6 animate-in slide-in-from-bottom-10 fade-in duration-700">
         {/* Logo Glass */}
-        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl flex items-center justify-center p-4 mb-2 ring-1 ring-white/10">
+        {/* Logo Glass */}
+        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl flex items-center justify-center mb-2 ring-1 ring-white/10 overflow-hidden">
           {businessLogo ? (
-            <img src={businessLogo} alt="Logo" className="w-full h-full object-contain drop-shadow-lg" />
+            <img src={businessLogo} alt="Logo" className="w-full h-full object-cover" />
           ) : (
             <span className="text-4xl font-bold text-white/80">{businessName[0]}</span>
           )}
@@ -277,21 +278,12 @@ async function MenuContent({ searchParams }: PageProps) {
             {businessName}
           </h1>
           <p className="text-white/80 text-lg md:text-xl font-medium flex items-center justify-center gap-2">
-            <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> Centro</span>
-            <span className="w-1 h-1 rounded-full bg-white/40" />
             <span className="flex items-center gap-1 text-emerald-400"><Clock className="w-4 h-4" /> Abierto ahora</span>
           </p>
         </div>
 
         {/* Action */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Link
-            href="#menu-content"
-            className="group flex items-center gap-2 bg-white/10 hover:bg-white/20 hover:text-white backdrop-blur-md border border-white/10 px-8 py-3 rounded-full text-white/90 font-semibold transition-all hover:scale-105"
-          >
-            Ver Carta <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
-          </Link>
-
           <ReservationTrigger businessName={businessName}>
             <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 hover:shadow-emerald-500/30">
               <Clock className="w-4 h-4" /> Reservar Mesa
