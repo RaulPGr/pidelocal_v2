@@ -262,9 +262,13 @@ export default function TenantLanding() {
                                     return (
                                         <div key={d} className={`flex justify-between items-start py-2 border-b border-white/10 ${isToday ? 'bg-white/5 -mx-2 px-2 rounded-lg' : ''}`}>
                                             <span className={`text-sm ${isToday ? 'font-bold text-white' : 'text-slate-400'}`}>{DAY_LABEL[d]}</span>
-                                            <span className={`text-xs font-mono text-right max-w-[70%] ${isToday ? 'text-emerald-400' : 'text-slate-200'}`}>
-                                                {formatearTramos(HORARIOS_USED[d])}
-                                            </span>
+                                            <div className="flex flex-col items-end gap-0.5">
+                                                {formatearTramos(HORARIOS_USED[d]).split(' / ').map((tramo, idx) => (
+                                                    <span key={idx} className={`text-xs font-mono whitespace-nowrap ${isToday ? 'text-emerald-400' : 'text-slate-200'}`}>
+                                                        {tramo}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     );
                                 })}
