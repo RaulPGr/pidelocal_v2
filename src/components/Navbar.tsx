@@ -130,7 +130,7 @@ export default function NavBar() {
         <div className="flex flex-1 items-center gap-1 rounded-full bg-white/5 px-2 py-1.5 sm:gap-3 sm:px-3 sm:py-2">
           <Item href={makeLink("/")}>Inicio</Item>
           <Item href={makeLink("/menu")}>Carta</Item>
-          {hasPromotions && <Item href={makeLink("/promociones")}>Promociones</Item>}
+
           {allowReservations && reservationsEnabled && <Item href={makeLink("/reservas")}>Reserva tu mesa</Item>}
           {/* Admin link intentionally removed */}
         </div>

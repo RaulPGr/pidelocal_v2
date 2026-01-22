@@ -225,7 +225,7 @@ export default function TenantLanding() {
                     <span className="inline-block animate-bounce mr-2">🔥</span>
                     <span>¡Hoy: <strong>{highlightPromotion.name}</strong>!</span>
                     <span className="opacity-80 mx-2 text-sm hidden sm:inline">{highlightPromotion.description}</span>
-                    <Link href="/promociones" className="underline hover:no-underline ml-2 text-sm uppercase font-bold tracking-wide">Ver Promoción</Link>
+                    <Link href={INFO.menuPath} className="underline hover:no-underline ml-2 text-sm uppercase font-bold tracking-wide">Ver Promoción</Link>
                 </div>
             )}
 
