@@ -168,13 +168,13 @@ export default function TenantLanding() {
             {ldData && <Script id="ld-localbusiness" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ldData) }} />}
 
             {/* --- HERO SECTION --- */}
-            <section className="relative h-[50vh] md:h-[85vh] min-h-[400px] md:min-h-[600px] w-full flex items-center justify-center overflow-hidden">
+            <section className="relative h-[50vh] md:h-[85vh] min-h-[400px] md:min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-900">
                 {/* Background Layer */}
                 <div className="absolute inset-0 z-0">
                     <img
                         src={INFO.fachadaUrl}
                         alt="Hero Background"
-                        className="w-full h-full object-cover object-center scale-105 animate-kenburns"
+                        className="w-full h-full object-contain md:object-cover object-center scale-100 md:scale-105 animate-in fade-in duration-1000"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent opacity-90" />
                 </div>
