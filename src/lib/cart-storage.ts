@@ -1,4 +1,3 @@
-// src/lib/cart-storage.ts
 "use client";
 
 // Representa un topping/extra almacenado dentro del carrito del cliente.
@@ -14,6 +13,7 @@ export type CartItem = {
   id: string | number;
   name: string;
   price: number; // precio final por unidad
+  listPrice?: number;
   image?: string;
   qty: number;
   category_id?: number | null;
@@ -35,10 +35,11 @@ function normalize(raw: any): CartItem | null {
     raw.price !== undefined
       ? Number(raw.price)
       : raw.unit_price_cents !== undefined
-      ? Number(raw.unit_price_cents) / 100
-      : raw.precio !== undefined
-      ? Number(raw.precio)
-      : NaN;
+        ? Number(raw.unit_price_cents) / 100
+        : raw.precio !== undefined
+          ? Number(raw.precio)
+          : NaN;
+  const listPrice = raw.listPrice !== undefined ? Number(raw.listPrice) : undefined;
   const image = raw.image ?? raw.imagen ?? raw.photo;
   const qty = Number(raw.qty ?? raw.quantity ?? 1);
   const category_id_raw = raw.category_id ?? raw.categoryId ?? null;
@@ -46,11 +47,11 @@ function normalize(raw: any): CartItem | null {
     category_id_raw == null || category_id_raw === "" ? null : Number(category_id_raw);
   const optionsArray = Array.isArray(raw.options)
     ? raw.options.map((opt: any) => ({
-        optionId: opt.optionId ?? opt.id ?? undefined,
-        name: opt.name ?? "",
-        groupName: opt.groupName ?? opt.group ?? undefined,
-        price_delta: Number(opt.price_delta ?? opt.priceDelta ?? 0) || 0,
-      }))
+      optionId: opt.optionId ?? opt.id ?? undefined,
+      name: opt.name ?? "",
+      groupName: opt.groupName ?? opt.group ?? undefined,
+      price_delta: Number(opt.price_delta ?? opt.priceDelta ?? 0) || 0,
+    }))
     : undefined;
   const variantKey = raw.variantKey ?? null;
   const basePrice = raw.basePrice != null ? Number(raw.basePrice) : undefined;
@@ -61,6 +62,7 @@ function normalize(raw: any): CartItem | null {
     id,
     name,
     price,
+    listPrice,
     image,
     qty: Math.max(1, qty),
     category_id: Number.isFinite(category_id) ? category_id : null,
@@ -105,6 +107,7 @@ export function addItem(
     nombre?: string;
     price?: number;
     precio?: number;
+    listPrice?: number;
     image?: string;
     imagen?: string;
     category_id?: number | null;
@@ -120,16 +123,17 @@ export function addItem(
   const id = product.id;
   const name = (product.name ?? product.nombre) as string;
   const price = Number(product.price ?? product.precio ?? 0);
+  const listPrice = product.listPrice;
   const image = product.image ?? product.imagen;
   const category_id_raw = product.category_id ?? product.categoryId ?? null;
   const category_id = category_id_raw == null ? null : Number(category_id_raw);
   const options = Array.isArray(product.options)
     ? product.options.map((opt) => ({
-        optionId: opt.optionId,
-        name: opt.name,
-        groupName: opt.groupName,
-        price_delta: Number(opt.price_delta ?? 0) || 0,
-      }))
+      optionId: opt.optionId,
+      name: opt.name,
+      groupName: opt.groupName,
+      price_delta: Number(opt.price_delta ?? 0) || 0,
+    }))
     : undefined;
   const variantKey =
     product.variantKey ||
@@ -149,6 +153,7 @@ export function addItem(
       id,
       name,
       price,
+      listPrice,
       image,
       qty: Math.max(1, qty),
       category_id: Number.isFinite(category_id) ? category_id : null,
