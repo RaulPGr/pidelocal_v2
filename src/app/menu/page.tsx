@@ -377,16 +377,7 @@ async function MenuContent({ searchParams }: PageProps) {
           </div>
 
           {/* Quick Action Button (Desktop Hover) */}
-          {allowOrdering && !out && (
-            <div className="absolute bottom-3 right-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-              <div className="bg-white rounded-full shadow-lg p-1">
-                {/* Reusing existing logic but styled minmally just for visual cue */}
-                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-500 text-white">
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Removed redundant hover arrow */}
         </div>
 
         {/* Content Area */}
