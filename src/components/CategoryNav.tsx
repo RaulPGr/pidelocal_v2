@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 // import { cn } from "@/lib/utils"; 
 import { ArrowRight, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDebounce } from "use-debounce"; // We might not have this, better use custom debounce or simple timeout
+// import { useDebounce } from "use-debounce";
 
 type Section = {
     id: number | "nocat";
