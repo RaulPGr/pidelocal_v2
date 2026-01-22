@@ -356,32 +356,32 @@ async function MenuContent({ searchParams }: PageProps) {
     return (
       <div className={`group relative bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 ${out ? 'opacity-60 grayscale-[0.5]' : ''}`}>
 
-        {/* Image Area */}
-        <div className="relative h-48 overflow-hidden bg-slate-100">
-          {p.image_url ? (
+        {/* Image Area - Only if image exists */}
+        {p.image_url && (
+          <div className="relative h-48 overflow-hidden bg-slate-100">
             <img
               src={p.image_url}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               loading="lazy"
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-              <span className="text-xs font-medium uppercase tracking-widest">Sin foto</span>
+            {/* Badges Overlay */}
+            <div className="absolute top-3 left-3 flex flex-col gap-1">
+              {promo && <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg backdrop-blur-md">PROMO</span>}
+              {p.available === false && <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">AGOTADO</span>}
             </div>
-          )}
-
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
-            {promo && <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg backdrop-blur-md">PROMO</span>}
-            {p.available === false && <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">AGOTADO</span>}
           </div>
+        )}
 
-          {/* Quick Action Button (Desktop Hover) */}
-          {/* Removed redundant hover arrow */}
-        </div>
+        {/* Badges Inline (if no image) */}
+        {!p.image_url && (promo || p.available === false) && (
+          <div className="px-5 pt-4 flex gap-1">
+            {promo && <span className="bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">PROMO</span>}
+            {p.available === false && <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-full">AGOTADO</span>}
+          </div>
+        )}
 
         {/* Content Area */}
-        <div className="p-5 flex flex-col h-[calc(100%-12rem)]">
+        <div className={`p-5 flex flex-col ${p.image_url ? 'h-[calc(100%-12rem)]' : 'h-full'}`}>
           <div className="flex-1">
             <div className="flex justify-between items-start gap-2 mb-2">
               <h3 className="text-lg font-bold text-slate-900 leading-tight group-hover:text-emerald-700 transition-colors line-clamp-2">
