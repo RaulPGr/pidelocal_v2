@@ -3,8 +3,9 @@
 
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
+import { getCount } from "@/lib/cart-storage"; // Deprecated local usage, keeping for safety if needed elsewhere or remove.
+// Better to clean up:
 import { useEffect, useState } from "react";
-import { getCount, subscribe } from "@/lib/cart-storage";
 import { useSubscriptionPlan } from "@/context/SubscriptionPlanContext";
 import { useOrdersEnabled } from "@/context/OrdersEnabledContext";
 import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/subscription";
