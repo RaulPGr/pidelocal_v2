@@ -431,7 +431,7 @@ async function MenuContent({ searchParams }: PageProps) {
                   product={{
                     id: p.id,
                     name: p.name,
-                    price: Number(p.price || 0),
+                    price: effectivePrice,
                     category_id: p.category_id ?? null,
                     option_groups: Array.isArray(p.option_groups) ? p.option_groups : [],
                     image_url: p.image_url || undefined,
