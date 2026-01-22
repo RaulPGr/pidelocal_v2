@@ -10,6 +10,7 @@ import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/
 // Admin entry removed from navbar
 
 import { useCart } from "@/context/CartContext";
+import { useReservation } from "@/context/ReservationContext";
 
 export default function NavBar() {
   const plan = useSubscriptionPlan();
@@ -17,6 +18,7 @@ export default function NavBar() {
   const allowOrdering = subscriptionAllowsOrders(plan) && ordersEnabled;
   const allowReservations = subscriptionAllowsReservations(plan);
   const { openDrawer } = useCart() as any;
+  const { openReservationModal } = useReservation();
   const [count, setCount] = useState(0);
   const [reservationsEnabled, setReservationsEnabled] = useState(false);
   const [hasPromotions, setHasPromotions] = useState(false);
@@ -131,7 +133,14 @@ export default function NavBar() {
           <Item href={makeLink("/")}>Inicio</Item>
           <Item href={makeLink("/menu")}>Carta</Item>
 
-          {allowReservations && reservationsEnabled && <Item href={makeLink("/reservas")}>Reserva tu mesa</Item>}
+          {allowReservations && reservationsEnabled && (
+            <button
+              onClick={openReservationModal}
+              className="rounded-full px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/10 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+            >
+              Reserva tu mesa
+            </button>
+          )}
           {/* Admin link intentionally removed */}
         </div>
         {allowOrdering && (
