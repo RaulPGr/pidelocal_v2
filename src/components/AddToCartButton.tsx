@@ -65,7 +65,7 @@ export default function AddToCartButton({ product, disabled, disabledLabel }: Pr
           onClick={onDec}
           className="h-full px-3 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-colors active:bg-emerald-100"
         >
-          <span className="text-lg font-bold leading-none mb-0.5">-</span>
+          {qty === 1 ? <Trash2 className="w-4 h-4" /> : <span className="text-lg font-bold leading-none mb-0.5">-</span>}
         </button>
         <span className="font-bold text-emerald-700 text-sm select-none">{qty}</span>
         <button
