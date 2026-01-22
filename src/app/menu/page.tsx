@@ -173,14 +173,23 @@ async function MenuContent({ searchParams }: PageProps) {
     if (resp.ok && Array.isArray(pj?.promotions)) { promotions = pj.promotions as PromotionRule[]; }
   } catch { }
 
+  const q = (Array.isArray(sp?.q) ? sp.q[0] : sp?.q) || ''; // Read 'q'
+
   const viewProducts = (menuMode === 'daily')
     ? (products || []).filter((p: any) => {
       const pDays = normalizeDays(p?.product_weekdays);
+      // Filter by Search Query
+      if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
+
       if (selectedDaySafe === 0) return pDays.length === 0 || pDays.length === 7;
       if (pDays.length === 0) return true;
       return pDays.length === 7 || pDays.includes(selectedDaySafe);
     })
-    : (products || []);
+    : (products || []).filter((p: any) => {
+      // Filter by Search Query
+      if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
 
   const groups = new Map<number | 'nocat', any[]>();
   for (const p of viewProducts) {
