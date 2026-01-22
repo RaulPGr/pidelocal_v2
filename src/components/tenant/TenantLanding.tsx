@@ -253,7 +253,7 @@ export default function TenantLanding() {
                         <div className="md:col-span-1 md:row-span-2 bg-slate-900 rounded-3xl p-6 text-white flex flex-col shadow-xl">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="p-2 bg-white/10 rounded-xl"><Clock className="w-6 h-6 text-emerald-400" /></div>
-                                <h3 className="font-bold text-xl">Horarios</h3>
+                                <h3 className="font-bold text-xl text-white">Horarios</h3>
                             </div>
 
                             <div className="flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-2">
