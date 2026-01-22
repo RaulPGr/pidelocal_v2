@@ -169,7 +169,16 @@ export default function TenantLanding() {
 
             {/* --- HERO SECTION --- */}
             <section className="relative h-[50vh] md:h-[85vh] min-h-[400px] md:min-h-[600px] w-full flex items-center justify-center overflow-hidden bg-slate-900">
-                {/* Background Layer */}
+                {/* 1. Blurred Background Layer (Mobile Only Fills) */}
+                <div className="absolute inset-0 z-0 md:hidden">
+                    <img
+                        src={INFO.fachadaUrl}
+                        alt="Ambient Background"
+                        className="w-full h-full object-cover blur-3xl opacity-60 scale-125"
+                    />
+                </div>
+
+                {/* 2. Main Background Layer */}
                 <div className="absolute inset-0 z-0">
                     <img
                         src={INFO.fachadaUrl}
