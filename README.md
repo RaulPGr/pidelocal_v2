@@ -38,3 +38,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ---
 
 > Nota: Esta rama incluye reintentos automáticos para notificaciones de Telegram y puede usarse para validar los despliegues de preview.
+ 
