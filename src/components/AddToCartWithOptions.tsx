@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import AddToCartButton from "@/components/AddToCartButton";
+import { useCart } from "@/context/CartContext";
 import ProductOptionsModal from "@/components/ProductOptionsModal";
 import { addItem } from "@/lib/cart-storage";
 
@@ -39,6 +40,9 @@ type Props = {
 
 // Botón "Añadir al carrito" que abre el modal de toppings cuando el producto los tiene.
 export default function AddToCartWithOptions({ product, disabled, disabledLabel }: Props) {
+  const { state: { items } } = useCart();
+  const qty = items.filter(i => i.id === product.id).reduce((acc, i) => acc + i.qty, 0);
+
   const hasOptions = Array.isArray(product.option_groups) && product.option_groups.length > 0;
   const [open, setOpen] = useState(false);
 
@@ -88,10 +92,15 @@ export default function AddToCartWithOptions({ product, disabled, disabledLabel 
           setOpen(true);
         }}
         disabled={disabled}
-        className={`mt-2 w-full rounded border px-3 py-1 text-sm ${disabled ? "cursor-not-allowed opacity-50" : "bg-emerald-600 text-white hover:bg-emerald-700"
+        className={`mt-2 w-full rounded-lg border border-transparent px-3 py-1.5 text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${disabled ? "bg-slate-100 text-slate-400 cursor-not-allowed" : "bg-slate-900 text-white hover:bg-slate-800 hover:shadow-md"
           }`}
       >
-        Personalizar y añadir
+        <span>Personalizar</span>
+        {qty > 0 && (
+          <span className="flex items-center justify-center bg-emerald-500 text-white text-[10px] h-5 min-w-[20px] px-1 rounded-full shadow-sm">
+            {qty}
+          </span>
+        )}
       </button>
       {open && (
         <ProductOptionsModal
