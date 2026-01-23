@@ -10,6 +10,7 @@ import { subscriptionAllowsOrders, type SubscriptionPlan } from "@/lib/subscript
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import { persistTenantSlugClient, resolveTenantSlugClient } from "@/lib/tenant-client";
 import { applyBestPromotion, type Promotion as PromotionRule } from "@/lib/promotions";
+import { ArrowLeft } from "lucide-react";
 
 type PaymentMethod = "cash" | "card";
 
@@ -444,9 +445,16 @@ function CartPageContent() {
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       {/* Header Simple */}
-      <div className="bg-white border-b border-slate-100 px-6 py-4 mb-8">
-        <div className="mx-auto max-w-6xl">
-          <h1 className="text-2xl font-bold text-slate-900">Finalizar Pedido</h1>
+      <div className="bg-white border-b border-slate-100 px-4 py-4 mb-8 sticky top-0 z-30">
+        <div className="mx-auto max-w-6xl flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+            aria-label="Volver"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900">Finalizar Pedido</h1>
         </div>
       </div>
 
