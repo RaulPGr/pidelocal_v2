@@ -180,15 +180,7 @@ function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: b
                 isOverlay && "shadow-xl scale-105 rotate-2 ring-2 ring-emerald-500/50 z-50 opacity-90"
             )}
         >
-            {/* Zone Tag if present */}
-            {zone && (
-                <div className="absolute top-0 right-0 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg border-b border-l border-emerald-100 flex items-center gap-1">
-                    <MapPin className="w-3 h-3" />
-                    {zone}
-                </div>
-            )}
-
-            <div className="flex justify-between items-start mb-2 pr-8">
+            <div className="flex justify-between items-start mb-2">
                 <div className="font-bold text-slate-800 text-sm">{item.customer_name}</div>
                 <div className="flex items-center gap-1 text-xs font-semibold bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">
                     <Users className="w-3 h-3" />
@@ -205,6 +197,12 @@ function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: b
                     <Phone className="w-3 h-3" />
                     {item.customer_phone}
                 </div>
+                {zone && (
+                    <div className="flex items-center gap-1.5 text-emerald-700 font-medium pt-1">
+                        <MapPin className="w-3 h-3 text-emerald-500" />
+                        {zone}
+                    </div>
+                )}
             </div>
 
             {cleanNote && (

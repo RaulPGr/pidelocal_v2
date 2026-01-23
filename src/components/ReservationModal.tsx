@@ -318,7 +318,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                             <User className="w-4 h-4 text-emerald-600" /> ¿Cuántos sois?
                                         </label>
                                         <div className="flex flex-wrap gap-2">
-                                            {[1, 2, 3, 4, 5, 6, 8, 10].map(n => (
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
                                                 <button
                                                     key={n}
                                                     onClick={() => setPax(n)}
