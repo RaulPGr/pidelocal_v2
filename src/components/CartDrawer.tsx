@@ -2,16 +2,46 @@
 
 import { useCart } from "@/context/CartContext";
 import { X, Trash2, ShoppingBag, Plus, Minus, ShieldCheck } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { applyBestPromotion, Promotion } from "@/lib/promotions";
+import { resolveTenantSlugClient } from "@/lib/tenant-client";
 
 export default function CartDrawer() {
     const { state, remove: removeItem, inc, dec, clear: clearCart, isOpen, closeDrawer } = useCart();
     const drawerRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+    const [promotions, setPromotions] = useState<Promotion[]>([]);
 
-    // Close on Escape key
+    useEffect(() => {
+        if (!isOpen) return;
+        const controller = new AbortController();
+        (async () => {
+            try {
+                const slug = resolveTenantSlugClient();
+                const endpoint = slug ? `/api/promotions?tenant=${encodeURIComponent(slug)}` : "/api/promotions";
+                const res = await fetch(endpoint, { cache: "no-store", signal: controller.signal });
+                const j = await res.json();
+                if (j.ok && Array.isArray(j.promotions)) {
+                    // Normalize
+                    const normalized = j.promotions.map((p: any) => ({
+                        ...p,
+                        value: Number(p.value ?? 0),
+                        min_amount: p.min_amount != null ? Number(p.min_amount) : null,
+                        weekdays: Array.isArray(p.weekdays) ? p.weekdays.map((n: any) => Number(n)) : undefined
+                    }));
+                    setPromotions(normalized);
+                }
+            } catch { }
+        })();
+        return () => controller.abort();
+    }, [isOpen]);
+
+    const items = state?.items || [];
+    // Calculate totals with promotion
+    const { subtotal, discount, total, promotion } = applyBestPromotion(items, promotions);
+    const formatPrice = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
     useEffect(() => {
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === "Escape") closeDrawer();
@@ -30,9 +60,7 @@ export default function CartDrawer() {
         return () => { document.body.style.overflow = ""; };
     }, [isOpen]);
 
-    const items = state?.items || [];
-    const total = items.reduce((acc: number, item: any) => acc + (item.price * item.qty), 0);
-    const formatPrice = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+
 
     if (!isOpen) return null;
 
@@ -161,8 +189,18 @@ export default function CartDrawer() {
                 {/* Footer */}
                 {items.length > 0 && (
                     <div className="border-t bg-slate-50 p-6 space-y-4">
-                        <div className="flex items-center justify-between text-base font-medium text-slate-900">
+                        <div className="flex items-center justify-between text-base text-slate-600">
                             <p>Subtotal</p>
+                            <p>{formatPrice(subtotal)}</p>
+                        </div>
+                        {discount > 0 && promotion && (
+                            <div className="flex items-center justify-between text-base font-medium text-emerald-600">
+                                <p>Promo ({promotion.name})</p>
+                                <p>-{formatPrice(discount)}</p>
+                            </div>
+                        )}
+                        <div className="flex items-center justify-between text-lg font-bold text-slate-900 border-t border-slate-200 pt-3">
+                            <p>Total</p>
                             <p>{formatPrice(total)}</p>
                         </div>
                         <p className="text-xs text-slate-500 text-center">Impuestos y gastos de envío calculados en el checkout</p>
