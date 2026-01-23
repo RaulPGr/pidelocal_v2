@@ -209,6 +209,30 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
         }
     }
 
+    async function handleToggleAvailability(p: Product) {
+        const newValue = !p.available;
+        // Optimistic update
+        setProducts(prev => prev.map(prod => prod.id === p.id ? { ...prod, available: newValue } : prod));
+
+        try {
+            const res = await fetch("/api/products", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: p.id, available: newValue })
+            });
+
+            if (!res.ok) throw new Error("Failed");
+
+            if (!newValue) toast("Producto marcado como agotado", { icon: "🚫" });
+            else toast.success("Producto disponible");
+
+        } catch (e) {
+            // Revert
+            setProducts(prev => prev.map(prod => prod.id === p.id ? { ...prod, available: !newValue } : prod));
+            toast.error("No se pudo actualizar");
+        }
+    }
+
     async function handleDelete(id: number) {
         if (!confirm("¿Seguro que quieres eliminar este producto?")) return;
         setLoading(true);
@@ -378,7 +402,13 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
                                                 ) : <span className="text-xs text-slate-400 italic">--</span>}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className={`w-2 h-2 rounded-full ${p.available ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                <button
+                                                    onClick={() => handleToggleAvailability(p)}
+                                                    className={`w-11 h-6 rounded-full transition-colors flex items-center px-0.5 shadow-inner ${p.available ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                                    title={p.available ? "Disponible: Click para desactivar" : "Agotado: Click para activar"}
+                                                >
+                                                    <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${p.available ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
