@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, Calendar, User, Clock, Check, Loader2, ChevronRight, Phone, Mail, MessageSquare } from "lucide-react";
+import { X, Calendar, User, Clock, Check, Loader2, ChevronRight, Phone, Mail, MessageSquare, MapPin, CheckCircle2 } from "lucide-react";
 import clsx from "clsx";
 
 type Shift = {
@@ -11,6 +11,13 @@ type Shift = {
     start: string;
     end: string;
     days: number[]; // 0=Sun, 1=Mon...
+    enabled: boolean;
+};
+
+type Zone = {
+    id: string;
+    name: string;
+    capacity: number;
     enabled: boolean;
 };
 
@@ -44,11 +51,14 @@ function generateSlots(start: string, end: string, interval = 30) {
     let current = startH * 60 + startM;
     const finish = endH * 60 + endM;
 
+    // Safety check to avoid infinite loops if interval is 0 or NaN
+    const step = interval > 0 ? interval : 30;
+
     while (current < finish) {
         const h = Math.floor(current / 60);
         const m = current % 60;
         slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-        current += interval;
+        current += step;
     }
     return slots;
 }
@@ -58,7 +68,10 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
     const [loading, setLoading] = useState(false);
     const [configLoading, setConfigLoading] = useState(true);
     const [shifts, setShifts] = useState<Shift[]>([]);
+    const [zones, setZones] = useState<Zone[]>([]);
     const [autoConfirm, setAutoConfirm] = useState(false);
+    const [interval, setIntervalVal] = useState(30);
+    const [duration, setDuration] = useState(90);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -69,6 +82,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
     const [date, setDate] = useState<Date | null>(null);
     const [pax, setPax] = useState(2);
     const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+    const [selectedZone, setSelectedZone] = useState<string>("");
     const [time, setTime] = useState<string | null>(null);
 
     const [name, setName] = useState("");
@@ -85,7 +99,8 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                 .then(res => res.json())
                 .then(j => {
                     if (j.ok && j.data?.reservations) {
-                        const s = j.data.reservations.slots;
+                        const r = j.data.reservations;
+                        const s = r.slots;
                         if (Array.isArray(s)) {
                             setShifts(s);
                         } else {
@@ -95,12 +110,41 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                 { id: "dinner", name: "Cenas", start: "20:00", end: "23:00", days: [4, 5, 6], enabled: true }
                             ]);
                         }
-                        setAutoConfirm(!!j.data.reservations.auto_confirm);
+
+                        // Load Zones
+                        if (Array.isArray(r.zones)) {
+                            setZones(r.zones);
+                        } else {
+                            // Default zones if not configured (should not happen if backend is correct)
+                            setZones([]);
+                        }
+
+                        setAutoConfirm(!!r.auto_confirm);
+                        // Use backend interval/duration or defaults
+                        setIntervalVal(Number(r.interval || 30));
+                        setDuration(Number(r.duration || 90));
+
+                        // Reset form
+                        setStep(1);
+                        setDate(null);
+                        setTime(null);
+                        setSelectedShiftId(null);
+                        setSelectedZone("");
                     }
                 })
                 .finally(() => setConfigLoading(false));
         }
     }, [isOpen]);
+
+    // Active zones logic
+    const enabledZones = useMemo(() => zones.filter(z => z.enabled), [zones]);
+
+    // Auto-select zone if only 1
+    useEffect(() => {
+        if (enabledZones.length === 1 && !selectedZone) {
+            setSelectedZone(enabledZones[0].id);
+        }
+    }, [enabledZones, selectedZone]);
 
     const days = useMemo(() => getNextDays(), []);
 
@@ -108,8 +152,6 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
     const availableShifts = useMemo(() => {
         if (!date) return [];
         const dayIndex = date.getDay(); // 0=Sun
-        // Fix: JS getDay() returns 0 for Sunday, but our config might use 0-6 or 1-7.
-        // Assuming our config uses 0=Sun, 1=Mon... as standard JS.
         return shifts.filter(s => s.enabled && s.days.includes(dayIndex));
     }, [date, shifts]);
 
@@ -117,8 +159,10 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
         if (!selectedShiftId) return [];
         const shift = shifts.find(s => s.id === selectedShiftId);
         if (!shift) return [];
-        return generateSlots(shift.start, shift.end);
-    }, [selectedShiftId, shifts]);
+
+        // Pass dynamic interval
+        return generateSlots(shift.start, shift.end, interval);
+    }, [selectedShiftId, shifts, interval]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -135,7 +179,9 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                     email,
                     people: pax,
                     notes,
+                    zoneId: selectedZone, // Send zone
                     tzOffsetMinutes: new Date().getTimezoneOffset()
+                    // duration is handled by backend usually, but could send if needed
                 })
             });
             const j = await res.json();
@@ -150,6 +196,37 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
     }
 
     if (!isOpen || !mounted) return null;
+
+    // Simplified step logic:
+    // Step 1: Date & Pax
+    // Step 1.5: Zone (only if >1 zones and none selected)
+    // Step 2: Shift/Time
+    // Step 3: Contact Details
+    // Step 4: Success
+
+    const showZoneSelection = enabledZones.length > 1;
+
+    // Handlers for step progression
+    const goNext = () => {
+        if (step === 1) {
+            if (showZoneSelection) setStep(1.5);
+            else setStep(2);
+        } else if (step === 1.5) {
+            setStep(2);
+        } else if (step === 2) {
+            setStep(3);
+        }
+    };
+
+    const goBack = () => {
+        if (step === 3) setStep(2);
+        else if (step === 2) {
+            if (showZoneSelection) setStep(1.5);
+            else setStep(1);
+        } else if (step === 1.5) {
+            setStep(1);
+        }
+    };
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -234,7 +311,55 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                     <div className="pt-4">
                                         <button
                                             disabled={!date}
-                                            onClick={() => setStep(2)}
+                                            onClick={goNext}
+                                            className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Continuar <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 1.5: Zone Selection */}
+                            {step === 1.5 && (
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                                            <MapPin className="w-5 h-5 text-emerald-600" />
+                                            ¿Dónde prefieres?
+                                        </h3>
+                                        <button onClick={goBack} className="text-xs text-emerald-600 font-medium hover:underline">Volver</button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {enabledZones.map(zone => (
+                                            <button
+                                                key={zone.id}
+                                                onClick={() => setSelectedZone(zone.id)}
+                                                className={clsx(
+                                                    "flex items-center justify-between p-4 rounded-xl border transition-all text-left",
+                                                    selectedZone === zone.id
+                                                        ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                                                        : "border-slate-200 hover:border-emerald-200 hover:bg-slate-50"
+                                                )}
+                                            >
+                                                <div>
+                                                    <div className={clsx("font-bold text-sm", selectedZone === zone.id ? "text-emerald-900" : "text-slate-700")}>
+                                                        {zone.name}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500">
+                                                        Capacidad: {zone.capacity} pax
+                                                    </div>
+                                                </div>
+                                                {selectedZone === zone.id && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <button
+                                            disabled={!selectedZone}
+                                            onClick={goNext}
                                             className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Continuar <ChevronRight className="w-4 h-4" />
@@ -248,7 +373,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-bold text-slate-900">{formatDate(date!)}</h3>
-                                        <button onClick={() => setStep(1)} className="text-xs text-emerald-600 font-medium hover:underline">Cambiar</button>
+                                        <button onClick={goBack} className="text-xs text-emerald-600 font-medium hover:underline">Cambiar</button>
                                     </div>
 
                                     {availableShifts.length === 0 ? (
@@ -298,7 +423,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                     <div className="pt-4">
                                         <button
                                             disabled={!time}
-                                            onClick={() => setStep(3)}
+                                            onClick={goNext}
                                             className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Continuar <ChevronRight className="w-4 h-4" />
@@ -310,15 +435,25 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                             {/* Step 3: Details */}
                             {step === 3 && (
                                 <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
-                                    <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg flex gap-3 items-center">
-                                        <div className="p-2 bg-white rounded-full shadow-sm text-emerald-600">
-                                            <Calendar className="w-4 h-4" />
+                                    <div className="bg-emerald-50 border border-emerald-100 p-3 rounded-lg flex flex-col gap-2">
+                                        <div className="flex gap-3 items-center">
+                                            <div className="p-2 bg-white rounded-full shadow-sm text-emerald-600">
+                                                <Calendar className="w-4 h-4" />
+                                            </div>
+                                            <div className="text-sm">
+                                                <div className="font-bold text-slate-800">{formatDate(date!)} a las {time}</div>
+                                                <div className="text-emerald-700">{pax} personas</div>
+                                            </div>
                                         </div>
-                                        <div className="text-sm">
-                                            <div className="font-bold text-slate-800">{formatDate(date!)} a las {time}</div>
-                                            <div className="text-emerald-700">{pax} personas</div>
-                                        </div>
-                                        <button onClick={() => setStep(2)} className="ml-auto text-xs text-emerald-600 font-medium hover:underline">Editar</button>
+                                        {selectedZone && (
+                                            <div className="flex gap-3 items-center pl-1">
+                                                <div className="w-8 flex justify-center text-emerald-600"><MapPin className="w-3 h-3" /></div>
+                                                <div className="text-xs font-medium text-slate-600">
+                                                    {zones.find(z => z.id === selectedZone)?.name}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <button onClick={goBack} className="text-xs text-emerald-600 font-medium hover:underline text-right">Editar</button>
                                     </div>
 
                                     <form onSubmit={handleSubmit} className="space-y-4">
