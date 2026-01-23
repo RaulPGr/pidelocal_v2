@@ -218,6 +218,12 @@ export default function CartDrawer() {
                                 Tramitar pedido
                             </button>
                         </div>
+                        <button
+                            onClick={closeDrawer}
+                            className="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+                        >
+                            ← Seguir pidiendo
+                        </button>
                         <div className="flex items-center justify-center gap-2 pt-2 text-xs text-slate-400 font-medium">
                             <ShieldCheck className="h-4 w-4 text-emerald-500" />
                             <span>Pagos 100% Seguros vía</span>
