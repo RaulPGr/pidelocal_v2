@@ -18,7 +18,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "business", label: "Negocio", icon: Store, show: true },
-    { id: "reservations", label: "Reservas", icon: Calendar, show: allowReservations },
     { id: "orders", label: "Pedidos y Horarios", icon: ShoppingBag, show: allowOrders },
     { id: "payments", label: "Pagos", icon: CreditCard, show: allowOrders },
   ];
@@ -58,9 +57,7 @@ export default function SettingsPage() {
           <BusinessSettingsClient mode="full" />
         )}
 
-        {activeTab === "reservations" && (
-          <BusinessSettingsClient mode="reservations" />
-        )}
+
 
         {activeTab === "orders" && (
           <div className="space-y-8">
