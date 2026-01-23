@@ -119,15 +119,21 @@ async function MenuContent({ searchParams }: PageProps) {
   let themeColor: string = "#10b981";
   let heroImage: string | null = null;
 
+  let reservationsEnabled = false;
+
   if (slug) {
     try {
-      const themeQuery = supabaseAdmin.from("businesses").select("name, theme_config, logo_url").eq("slug", slug).maybeSingle();
+      const themeQuery = supabaseAdmin.from("businesses").select("name, theme_config, logo_url, social").eq("slug", slug).maybeSingle();
       const { data: themeRow } = await themeQuery;
       businessLogo = (themeRow as any)?.logo_url ?? null;
       businessName = (themeRow as any)?.name ?? "Restaurante";
       themeColor = (themeRow as any)?.theme_config?.color ?? "#10b981";
-      // We could add a hero_image field later, for now let's use a nice pattern or gradient
-      // heroImage = (themeRow as any)?.theme_config?.hero_image ?? null; 
+      const social = (themeRow as any)?.social;
+      reservationsEnabled = social?.reservations_enabled !== false; // Default true if legacy, but safer to match logic elsewhere
+      // But backend logic says: enabled = !!social.reservations_enabled (default false if missing?)
+      // Let's check api/settings/home logic: `enabled: !!social.reservations_enabled`.
+      // So default is FALSE.
+      reservationsEnabled = !!social?.reservations_enabled;
     } catch { }
   }
 
@@ -294,11 +300,13 @@ async function MenuContent({ searchParams }: PageProps) {
 
         {/* Action */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <ReservationTrigger businessName={businessName}>
-            <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 hover:shadow-emerald-500/30">
-              <Clock className="w-4 h-4" /> Reservar Mesa
-            </button>
-          </ReservationTrigger>
+          {reservationsEnabled && (
+            <ReservationTrigger businessName={businessName}>
+              <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-emerald-900/20 transition-all hover:scale-105 hover:shadow-emerald-500/30">
+                <Clock className="w-4 h-4" /> Reservar Mesa
+              </button>
+            </ReservationTrigger>
+          )}
         </div>
       </div>
     </div>
@@ -343,11 +351,13 @@ async function MenuContent({ searchParams }: PageProps) {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
-          <ReservationTrigger businessName={businessName}>
-            <button className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-100 transition-colors">
-              <Clock className="w-4 h-4" /> Reservar
-            </button>
-          </ReservationTrigger>
+          {reservationsEnabled && (
+            <ReservationTrigger businessName={businessName}>
+              <button className="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-100 transition-colors">
+                <Clock className="w-4 h-4" /> Reservar
+              </button>
+            </ReservationTrigger>
+          )}
           <button className="p-2 rounded-full hover:bg-slate-100 text-slate-400">
             <Search className="w-5 h-5" />
           </button>
