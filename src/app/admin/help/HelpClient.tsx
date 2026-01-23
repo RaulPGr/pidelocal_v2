@@ -15,7 +15,8 @@ import {
     Megaphone,
     LifeBuoy,
     X,
-    ShieldCheck
+    ShieldCheck,
+    CalendarCheck
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -214,6 +215,37 @@ export default function HelpClient() {
                 {
                     title: "Modo quiosco para cocina",
                     content: "Puedes poner una tablet en la cocina con la vista de Pedidos abierta. Es la mejor forma de que los cocineros vean lo que entra en tiempo real."
+                }
+            ]
+        },
+        {
+            title: "Gestión de Reservas",
+            icon: CalendarCheck,
+            color: "violet",
+            items: [
+                {
+                    title: "Activar o Desactivar Reservas",
+                    content: "Ve a Configuración > Reservas. Allí encontrarás un interruptor principal. Si lo desactivas, el botón 'Reservar Mesa' desaparecerá automáticamente tanto de tu página web como de tu carta digital, para que no recibas solicitudes."
+                },
+                {
+                    title: "Control de Aforo y Zonas",
+                    content: (
+                        <div className="space-y-4">
+                            <p>Puedes definir distintas zonas (ej: Terraza, Salón Interior) y asignarles una capacidad máxima.</p>
+                            <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                                <li><strong>Aforo Máx:</strong> Es la capacidad física total (ej: 20 pax).</li>
+                                <li><strong>Disponibilidad Real:</strong> El sistema calcula automáticamente cuánta gente hay reservada en cada tramo. Si el aforo se completa, el horario aparece como 'Lleno/No disponible' automáticamante.</li>
+                            </ul>
+                        </div>
+                    )
+                },
+                {
+                    title: "Franjas Horarias (Slots)",
+                    content: "El sistema genera los tramos de reserva (ej: 13:00, 13:30, 14:00) basándose en tu configuración de 'Intervalo' y 'Duración media'. No necesitas crear cada hora a mano, ¡es automático según tu horario de apertura!"
+                },
+                {
+                    title: "Tablero Kanban de Reservas",
+                    content: "En la sección Reservas verás un tablero visual. Las tarjetas muestran una etiqueta con la Zona (ej: Terraza) y el número de personas. Puedes arrastrar las reservas para cambiar su estado (Pendiente -> Confirmada)."
                 }
             ]
         },
