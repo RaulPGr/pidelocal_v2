@@ -12,6 +12,7 @@ import AllergenSelector from "./AllergenSelector";
 import { ALLERGENS } from "@/lib/allergens";
 import CategoriesManager from "./CategoriesManager";
 import { toast } from "sonner";
+import ImageCropper from "./ImageCropper";
 
 type Category = { id: number; name: string; sort_order?: number | null };
 type Product = {
@@ -69,6 +70,10 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
     const [editOffsetX, setEditOffsetX] = useState(0);
     const [editOffsetY, setEditOffsetY] = useState(0);
     const fileRef = useRef<HTMLInputElement>(null);
+
+    // Cropper State
+    const [isCropping, setIsCropping] = useState(false);
+    const [cropSrc, setCropSrc] = useState<string | null>(null);
 
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -252,12 +257,21 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
     function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
         const f = e.target.files?.[0];
         if (f) {
-            setFormFile(f);
-            setFormFilePreview(URL.createObjectURL(f));
-            // Reset edit params
-            setEditZoom(1); setEditOffsetX(0); setEditOffsetY(0);
+            const url = URL.createObjectURL(f);
+            setCropSrc(url);
+            setIsCropping(true);
+            e.target.value = ''; // Reset so can select same file again
         }
     }
+
+    function handleCropComplete(blob: Blob) {
+        const file = new File([blob], "product-image.jpg", { type: "image/jpeg" });
+        setFormFile(file);
+        setFormFilePreview(URL.createObjectURL(blob));
+        setIsCropping(false);
+        setCropSrc(null);
+    }
+
 
     // Filter Logic
     const filteredProducts = useMemo(() => {
@@ -564,6 +578,19 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
                 </div>
             )}
 
+            {/* --- CROPPER OVERLAY --- */}
+            {isCropping && cropSrc && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                    <div className="w-full max-w-4xl h-[80vh]">
+                        <ImageCropper
+                            imageSrc={cropSrc!}
+                            aspect={16 / 9} // Standard card aspect ratio
+                            onCropComplete={handleCropComplete}
+                            onCancel={() => { setIsCropping(false); setCropSrc(null); }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
