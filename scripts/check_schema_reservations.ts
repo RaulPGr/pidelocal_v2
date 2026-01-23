@@ -2,19 +2,22 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 async function main() {
-    console.log("Checking reservations table schema...");
-    // Try to insert a dummy record with a potential zone_id column to see if it fails, 
-    // OR just select * limit 1 and print keys.
-
-    const { data, error } = await supabaseAdmin
-        .from('reservations')
-        .select('*')
+    console.log("Checking businesses table schema...");
+    const { data: businesses, error: bizError } = await supabaseAdmin
+        .from('businesses')
+        .select('slug, social')
         .limit(1);
 
-    if (error) {
-        console.error("Error selecting:", error);
+    if (bizError) {
+        console.error("Error selecting businesses:", bizError);
     } else {
-        console.log("Columns found via Select *:", data && data.length > 0 ? Object.keys(data[0]) : "No rows found, cannot infer keys easily.");
+        console.log("Business found:", businesses && businesses.length > 0 ? businesses[0] : "None");
+        if (businesses && businesses.length > 0) {
+            const social = businesses[0].social;
+            console.log("Social column type:", typeof social);
+            console.log("Social keys:", social ? Object.keys(social) : "null");
+            console.log("Reservations Zones:", social?.reservations_zones);
+        }
     }
 }
 

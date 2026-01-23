@@ -97,6 +97,8 @@ export async function GET(req: Request) {
         reservations_max_days: reservationsMaxDays,
         reservations_auto_confirm: reservationsAutoConfirm,
         reservations_blocked_dates: reservationsBlockedDates,
+        reservations_interval: Number(social?.reservations_interval || 30),
+        reservations_duration: Number(social?.reservations_duration || 90),
         menu_layout: menuLayout,
         telegram_notifications_enabled: telegramEnabled,
         telegram_bot_token: telegramToken,
