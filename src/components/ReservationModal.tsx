@@ -401,7 +401,7 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
                                                         {zone.name}
                                                     </div>
                                                     <div className="text-xs text-slate-500">
-                                                        Capacidad: {zone.capacity} pax
+                                                        Aforo Máx: {zone.capacity} pax
                                                     </div>
                                                 </div>
                                                 {selectedZone === zone.id && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}

@@ -15,7 +15,7 @@ import {
     useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, Clock, X, User, Phone, Users, MessageSquare } from "lucide-react";
+import { Check, Clock, X, User, Phone, Users, MessageSquare, MapPin } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
 
@@ -40,6 +40,26 @@ const COLS = [
     { id: 'confirmed', title: 'Confirmadas', color: 'bg-emerald-100 border-emerald-200 text-emerald-800' },
     { id: 'cancelled', title: 'Canceladas', color: 'bg-rose-100 border-rose-200 text-rose-800' },
 ];
+
+function parseNote(raw: string | null) {
+    if (!raw) return { zone: null, text: null };
+
+    let text = raw;
+    let zoneName = null;
+
+    const zoneMatch = text.match(/\[Zona:\s*([^\]]+)\]/i);
+    if (zoneMatch) {
+        zoneName = zoneMatch[1].trim();
+        text = text.replace(zoneMatch[0], "");
+    }
+
+    text = text.replace(/\[ID:[^\]]+\]/gi, "");
+
+    return {
+        zone: zoneName,
+        text: text.trim() || null
+    };
+}
 
 export default function ReservationsKanban({ items, onStatusChange }: Props) {
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -141,6 +161,7 @@ function DroppableColumn({ col, items }: { col: any, items: AdminReservation[] }
 
 function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: boolean }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const { zone, text: cleanNote } = parseNote(item.notes);
 
     const style = transform ? {
         transform: CSS.Translate.toString(transform),
@@ -155,11 +176,19 @@ function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: b
             {...listeners}
             {...attributes}
             className={clsx(
-                "bg-white p-4 rounded-xl shadow-sm border border-slate-100 group cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
+                "bg-white p-4 rounded-xl shadow-sm border border-slate-100 group cursor-grab active:cursor-grabbing hover:shadow-md transition-all relative overflow-hidden",
                 isOverlay && "shadow-xl scale-105 rotate-2 ring-2 ring-emerald-500/50 z-50 opacity-90"
             )}
         >
-            <div className="flex justify-between items-start mb-2">
+            {/* Zone Tag if present */}
+            {zone && (
+                <div className="absolute top-0 right-0 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-bl-lg border-b border-l border-emerald-100 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {zone}
+                </div>
+            )}
+
+            <div className="flex justify-between items-start mb-2 pr-8">
                 <div className="font-bold text-slate-800 text-sm">{item.customer_name}</div>
                 <div className="flex items-center gap-1 text-xs font-semibold bg-slate-100 px-2 py-0.5 rounded-full text-slate-600">
                     <Users className="w-3 h-3" />
@@ -170,7 +199,7 @@ function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: b
             <div className="text-xs text-slate-500 space-y-1 mb-3">
                 <div className="flex items-center gap-1.5">
                     <Clock className="w-3 h-3 text-emerald-500" />
-                    {new Date(item.reserved_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(item.reserved_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                 </div>
                 <div className="flex items-center gap-1.5 hover:text-emerald-600">
                     <Phone className="w-3 h-3" />
@@ -178,10 +207,10 @@ function KanbanCard({ item, isOverlay }: { item: AdminReservation, isOverlay?: b
                 </div>
             </div>
 
-            {item.notes && (
+            {cleanNote && (
                 <div className="mt-2 text-[10px] leading-tight bg-amber-50 text-amber-800 p-2 rounded-lg border border-amber-100 flex gap-2">
                     <MessageSquare className="w-3 h-3 shrink-0" />
-                    <span className="line-clamp-2">{item.notes}</span>
+                    <span className="line-clamp-2">{cleanNote}</span>
                 </div>
             )}
         </div>
