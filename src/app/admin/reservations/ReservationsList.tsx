@@ -20,7 +20,8 @@ import {
   Filter,
   Loader2,
   Columns,
-  List
+  List,
+  MapPin
 } from "lucide-react";
 import clsx from "clsx";
 import ReservationsKanban from "./ReservationsKanban";
@@ -71,6 +72,30 @@ function todayKey() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   return now.toISOString().slice(0, 10);
+}
+
+function parseNote(raw: string | null) {
+  if (!raw) return { zone: null, text: null };
+
+  // Extract Zone Tag usually like [ID:terrace] [Zona: Terraza]
+  // We can just regex for keys
+  let text = raw;
+  let zoneName = null;
+
+  // Try to find [Zona: ...]
+  const zoneMatch = text.match(/\[Zona:\s*([^\]]+)\]/i);
+  if (zoneMatch) {
+    zoneName = zoneMatch[1].trim();
+    text = text.replace(zoneMatch[0], "");
+  }
+
+  // Remove ID tag if present [ID:...]
+  text = text.replace(/\[ID:[^\]]+\]/gi, "");
+
+  return {
+    zone: zoneName,
+    text: text.trim() || null
+  };
 }
 
 export default function ReservationsList() {
@@ -242,7 +267,7 @@ export default function ReservationsList() {
                       <th className="px-6 py-4">Cliente</th>
                       <th className="px-6 py-4 text-center">Personas</th>
                       <th className="px-6 py-4">Estado</th>
-                      <th className="px-6 py-4">Notas</th>
+                      <th className="px-6 py-4">Zona / Notas</th>
                       <th className="px-6 py-4 text-right">Acciones</th>
                     </tr>
                   </thead>
@@ -250,6 +275,7 @@ export default function ReservationsList() {
                     {filteredItems.map((res) => {
                       const status = STATUS_CONFIG[res.status] || { label: res.status, bg: 'bg-slate-100', text: 'text-slate-600', icon: null };
                       const StatusIcon = status.icon;
+                      const { zone, text: cleanNote } = parseNote(res.notes);
 
                       return (
                         <tr key={res.id} className="group hover:bg-slate-50/80 transition-colors">
@@ -303,14 +329,22 @@ export default function ReservationsList() {
                           </td>
 
                           <td className="px-6 py-4 max-w-xs">
-                            {res.notes ? (
-                              <div className="flex items-start gap-2 bg-amber-50 p-2 rounded-lg border border-amber-100 text-amber-800 text-xs">
-                                <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
-                                <span className="line-clamp-2" title={res.notes}>{res.notes}</span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-300 text-xs italic">Sin notas</span>
-                            )}
+                            <div className="space-y-2">
+                              {zone && (
+                                <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-emerald-100 rounded-md shadow-sm text-xs font-medium text-emerald-800">
+                                  <MapPin className="w-3 h-3 text-emerald-500" />
+                                  {zone}
+                                </div>
+                              )}
+                              {cleanNote ? (
+                                <div className="flex items-start gap-2 bg-amber-50 p-2 rounded-lg border border-amber-100 text-amber-800 text-xs">
+                                  <MessageSquare className="w-3 h-3 shrink-0 mt-0.5" />
+                                  <span className="line-clamp-2" title={cleanNote}>{cleanNote}</span>
+                                </div>
+                              ) : (
+                                !zone && <span className="text-slate-300 text-xs italic">Sin notas</span>
+                              )}
+                            </div>
                           </td>
 
                           <td className="px-6 py-4 text-right">

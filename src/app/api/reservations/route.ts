@@ -178,60 +178,42 @@ export async function POST(req: NextRequest) {
       .from('reservations')
       .select('reserved_at, timezone_offset_minutes, status, party_size, notes')
       .eq('business_id', tenant.id)
-      .gte('reserved_at', dayStartUtc) // Filter broad range then refine
+      .gte('reserved_at', dayStartUtc)
       .lte('reserved_at', dayEndUtc)
       .neq('status', 'cancelled');
 
     if (fetchErr) throw fetchErr;
 
-    // Calculate occupied seats in the time window
+    // Calculate occupied seats
     let occupiedSeats = 0;
-
-    // Check overlapping
     const newStart = reservedAt.getTime();
     const newEnd = reservationEnd.getTime();
 
     for (const res of existing || []) {
-      // Adjust time
-      const resOffset = typeof res.timezone_offset_minutes === 'number' ? res.timezone_offset_minutes : offsetToUse;
-      const resStart = new Date(res.reserved_at).getTime() + (resOffset * 60000); // Shift to local time roughly
-      // BUT actually reserved_at is usually ISO UTC. 
-      // We really want to compare absolute moments in time. 
-      // reserved_at from DB is ISO string. new Date(res.reserved_at) gives a Date object.
-      // If we treat everything as UTC timestamps, we are fine.
+      // Parse reservation time
+      // reserved_at is ISO UTC. We treat it as the absolute time.
       const rStart = new Date(res.reserved_at).getTime();
-      const rEnd = rStart + (avgDuration * 60000); // Assume all have same duration for simplicity or parse from metadata if we had it
+      const rEnd = rStart + (avgDuration * 60000);
 
-      // Check window overlap: (StartA < EndB) and (EndA > StartB)
+      // Check overlap
       if (newStart < rEnd && newEnd > rStart) {
         // Check Zone Match
-        // Since we store zone in notes like "[Zona: Terrace]", we parse it.
-        let resZoneId = null;
-        const match = res.notes?.match(/\[Zona: ([^\]]+)\]/); // Matches name not ID potentially, or handle both.
-        // Ideally we matched by ID. Let's make sure we save formatted like [ZonaID: xyz] or [Zona: Name]. 
-        // Let's use ID in the bracket for robustness if we use ID. 
-        // Or simpler: If we are checking capacity for 'targetZone', we check if this reservation belongs to it.
-
-        // Allow legacy (no zone) to count towards EVERYTHING if we want to be safe, 
-        // OR ignore them for zone capacity? 
-        // Better: If we have targetZone, only count reservations that explicitly match it OR have no zone (assume main?).
-        // For now, let's assume if 'notes' contains the zone name or ID.
-
+        // We look for [ID:zoneId] in notes.
         const noteLower = (res.notes || '').toLowerCase();
-        const targetName = targetZone ? targetZone.name.toLowerCase() : '';
-        const targetId = targetZone ? targetZone.id.toLowerCase() : '';
-
         let belongsToZone = false;
 
         if (targetZone) {
+          // If we are booking a specific zone, we count:
+          // 1. Reservations explicitly for this zone
+          // 2. Reservations with NO zone info (legacy/global) -> Conservative approach to prevent overbooking
+          const targetId = targetZone.id.toLowerCase();
+          const targetName = targetZone.name.toLowerCase();
+
           if (noteLower.includes(`[id:${targetId}]`)) belongsToZone = true;
           else if (noteLower.includes(`zona: ${targetName}`)) belongsToZone = true;
-          // If existing reservation has NO zone info, does it eat into this zone? 
-          // Creating a risk of overbooking if we don't count it. 
-          // Let's count it if we can't determine zone to be safe (pessimistic).
           else if (!noteLower.includes('[id:') && !noteLower.includes('zona:')) belongsToZone = true;
         } else {
-          // Global Check
+          // Global check (if business has no zones defined/enabled)
           belongsToZone = true;
         }
 
@@ -245,7 +227,7 @@ export async function POST(req: NextRequest) {
 
     if (maxCap > 0 && (occupiedSeats + people) > maxCap) {
       return NextResponse.json(
-        { ok: false, message: `No hay disponibilidad en ${targetZone ? targetZone.name : 'este horario'} para ${people} personas.` },
+        { ok: false, message: `Lo sentimos, no hay disponibilidad en ${targetZone ? targetZone.name : 'este horario'} para ${people} personas.` },
         { status: 409 }
       );
     }

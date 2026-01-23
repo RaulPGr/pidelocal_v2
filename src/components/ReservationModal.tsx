@@ -401,20 +401,29 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
 
                                             {selectedShiftId && (
                                                 <div className="grid grid-cols-4 gap-2 pt-2 animate-in fade-in slide-in-from-top-2">
-                                                    {availableSlots.map(slot => (
-                                                        <button
-                                                            key={slot}
-                                                            onClick={() => setTime(slot)}
-                                                            className={clsx(
-                                                                "py-2 text-sm font-medium rounded-lg border transition-all",
-                                                                time === slot
-                                                                    ? "bg-emerald-600 text-white border-emerald-600 shadow-md"
-                                                                    : "bg-white text-slate-600 border-slate-200 hover:border-emerald-400 hover:text-emerald-700"
-                                                            )}
-                                                        >
-                                                            {slot}
-                                                        </button>
-                                                    ))}
+                                                    {availableSlots.map(slot => {
+                                                        const status = getSlotStatus(slot);
+                                                        const isFull = status === 'full';
+
+                                                        return (
+                                                            <button
+                                                                key={slot}
+                                                                disabled={isFull}
+                                                                onClick={() => setTime(slot)}
+                                                                className={clsx(
+                                                                    "py-2 text-sm font-medium rounded-lg border transition-all relative overflow-hidden",
+                                                                    time === slot
+                                                                        ? "bg-emerald-600 text-white border-emerald-600 shadow-md"
+                                                                        : isFull
+                                                                            ? "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                                                                            : "bg-white text-slate-600 border-slate-200 hover:border-emerald-400 hover:text-emerald-700"
+                                                                )}
+                                                            >
+                                                                {slot}
+                                                                {isFull && <div className="absolute inset-0 flex items-center justify-center bg-slate-50/80 text-[10px] font-bold text-rose-400 uppercase tracking-wider">Lleno</div>}
+                                                            </button>
+                                                        )
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
