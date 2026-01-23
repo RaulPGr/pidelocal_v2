@@ -80,6 +80,8 @@ export async function GET(req: Request) {
         max_days: resMaxDays,
         auto_confirm: resAuto,
         blocked_dates: resBlocked,
+        interval: Number(social.reservations_interval || 30),
+        duration: Number(social.reservations_duration || 90),
       },
       orders: {
         enabled: ordersEnabled,
