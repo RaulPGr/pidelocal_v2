@@ -164,6 +164,59 @@ export default function ReservationModal({ isOpen, onClose, businessName }: Rese
         return generateSlots(shift.start, shift.end, interval);
     }, [selectedShiftId, shifts, interval]);
 
+    // Store busy data
+    const [busyData, setBusyData] = useState<{ capacity: number, busy: any[] } | null>(null);
+
+    useEffect(() => {
+        if (!date || (enabledZones.length > 1 && !selectedZone)) {
+            setBusyData(null);
+            return;
+        }
+
+        const check = async () => {
+            try {
+                const startStr = date.toISOString().split('T')[0];
+                const res = await fetch(`/api/reservations/availability?date=${startStr}&zoneId=${selectedZone}&tenant=${encodeURIComponent(businessName)}`);
+                const j = await res.json();
+                if (j.ok) {
+                    setBusyData(j);
+                } else {
+                    setBusyData(null);
+                }
+            } catch (e) {
+                console.error(e);
+                setBusyData(null);
+            }
+        };
+        check();
+    }, [date, selectedZone, businessName, enabledZones.length]);
+
+    // Compute status per slot
+    const getSlotStatus = (slotTime: string) => {
+        if (!busyData || !date) return 'available';
+        const [h, m] = slotTime.split(':').map(Number);
+
+        // Slot Start Time
+        const slotStart = new Date(date);
+        slotStart.setHours(h, m, 0, 0);
+        const slotStartMs = slotStart.getTime();
+        const slotEndMs = slotStartMs + (duration * 60000);
+
+        // Check Overlaps
+        let occupied = 0;
+        for (const b of busyData.busy) {
+            // Overlap: StartA < EndB && EndA > StartB
+            if (slotStartMs < b.end && slotEndMs > b.start) {
+                occupied += b.pax;
+            }
+        }
+
+        // Check logic: occupied + myPax > capacity?
+        if (occupied + pax > busyData.capacity) return 'full';
+
+        return 'available';
+    };
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
