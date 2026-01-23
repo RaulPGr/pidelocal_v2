@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { persistTenantSlugClient, resolveTenantSlugClient } from "@/lib/tenant-client";
+import { Loader2, MapPin, Calendar as CalendarIcon, Clock, Users, User, CheckCircle2 } from "lucide-react";
 
 type OpeningHours = Record<string, Array<{ abre?: string; cierra?: string; open?: string; close?: string }>>;
 
@@ -12,13 +13,16 @@ type Config = {
   businessLogo: string | null;
   hours: OpeningHours | null;
   slots: Array<{ from: string; to: string; capacity?: number }> | null;
+  zones: Array<{ id: string; name: string; capacity: number; enabled: boolean }> | null;
   blockedDates: string[];
   leadHours: number | null;
   maxDays: number | null;
+  interval: number;
+  duration: number;
 };
 
 const DAY_LABELS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const DAY_KEYS = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 
 function parseTramos(list: any): Array<{ start: number; end: number }> {
   if (!Array.isArray(list)) return [];
@@ -37,17 +41,19 @@ function parseTramos(list: any): Array<{ start: number; end: number }> {
   return out;
 }
 
-function buildSlots(tramos: Array<{ start: number; end: number }>, minDate?: Date) {
+function buildSlots(tramos: Array<{ start: number; end: number }>, interval: number, minDate?: Date) {
   const slots: string[] = [];
-  const step = 30; // minutes
+  const step = interval > 0 ? interval : 30;
   const minMinutes = minDate ? minDate.getHours() * 60 + minDate.getMinutes() : null;
+
   for (const tramo of tramos) {
     for (let minutes = tramo.start; minutes < tramo.end; minutes += step) {
+      // Basic check: start time must be before closing
+      if (minMinutes !== null && minutes < minMinutes) continue;
+
       const hours = Math.floor(minutes / 60);
       const mins = minutes % 60;
-      const slot = `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
-      if (minMinutes !== null && minutes < minMinutes) continue;
-      slots.push(slot);
+      slots.push(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`);
     }
   }
   return slots;
@@ -66,30 +72,37 @@ function hhmmToMinutes(v: string) {
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
 }
 
-function buildSlotsFromCustom(
-  rawSlots: Array<{ from: string; to: string }>,
+function buildSlotsFromShifts(
+  shifts: Array<{ from: string; to: string }>,
+  interval: number,
   selectedDate: string,
   leadHours: number | null
 ) {
-  const slots: string[] = [];
-  const step = 30;
-  const today = new Date();
-  const selDate = new Date(selectedDate + "T00:00:00");
-  const enforceLead = leadHours && leadHours > 0 && selDate && sameDay(today, selDate);
-  const minLeadMinutes = enforceLead ? today.getHours() * 60 + today.getMinutes() + leadHours * 60 : null;
-  for (const s of rawSlots) {
+  const tramos: Array<{ start: number; end: number }> = [];
+  for (const s of shifts) {
     if (!/^\d{2}:\d{2}$/.test(s.from) || !/^\d{2}:\d{2}$/.test(s.to)) continue;
     const start = hhmmToMinutes(s.from);
     const end = hhmmToMinutes(s.to);
-    if (end <= start) continue;
-    for (let minutes = start; minutes < end; minutes += step) {
-      if (minLeadMinutes !== null && minutes < minLeadMinutes) continue;
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      slots.push(`${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`);
+    if (end > start) tramos.push({ start, end });
+  }
+
+  const today = new Date();
+  const selDate = new Date(selectedDate + "T00:00:00");
+  const isToday = sameDay(today, selDate);
+
+  let minDate: Date | undefined = undefined;
+
+  if (isToday) {
+    minDate = new Date();
+    if (leadHours && leadHours > 0) {
+      minDate.setHours(minDate.getHours() + leadHours);
+    } else {
+      // Strict past check buffer
+      minDate.setMinutes(minDate.getMinutes() + 15);
     }
   }
-  return slots;
+
+  return buildSlots(tramos, interval, minDate);
 }
 
 export default function ReservationsClient() {
@@ -97,6 +110,7 @@ export default function ReservationsClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedZone, setSelectedZone] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
@@ -108,6 +122,7 @@ export default function ReservationsClient() {
   const [message, setMessage] = useState<string | null>(null);
   const [uiHint, setUiHint] = useState<string | null>(null);
   const [datesWithStatus, setDatesWithStatus] = useState<Array<{ date: string; blocked: boolean }>>([]);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -124,6 +139,8 @@ export default function ReservationsClient() {
           return;
         }
         const cfg = j.data;
+        const zones = Array.isArray(cfg.reservations?.zones) ? cfg.reservations.zones : null;
+
         setConfig({
           enabled: !!cfg.reservations?.enabled,
           businessName: cfg.business?.name || "Nuestro restaurante",
@@ -131,12 +148,21 @@ export default function ReservationsClient() {
           businessLogo: cfg.images?.logo || null,
           hours: cfg.hours || null,
           slots: Array.isArray(cfg.reservations?.slots) ? cfg.reservations.slots : null,
+          zones: zones,
           blockedDates: Array.isArray(cfg.reservations?.blocked_dates)
             ? cfg.reservations.blocked_dates.filter((d: any) => typeof d === "string")
             : [],
           leadHours: Number.isFinite(cfg.reservations?.lead_hours) ? Number(cfg.reservations.lead_hours) : null,
           maxDays: Number.isFinite(cfg.reservations?.max_days) ? Number(cfg.reservations.max_days) : null,
+          interval: Number(cfg.reservations?.interval || 30),
+          duration: Number(cfg.reservations?.duration || 90),
         });
+
+        if (Array.isArray(zones) && zones.length > 0) {
+          const enabledZones = zones.filter((z: any) => z.enabled);
+          if (enabledZones.length === 1) setSelectedZone(enabledZones[0].id);
+        }
+
       } catch (e: any) {
         if (active) setError(e?.message || "No se pudo cargar la configuración");
       } finally {
@@ -154,46 +180,32 @@ export default function ReservationsClient() {
     const today = new Date();
     const maxDays = config?.maxDays && config.maxDays > 0 ? config.maxDays : 30;
     const blockedSet = new Set((config?.blockedDates || []).map((d) => d.trim()));
+
     for (let i = 0; i < maxDays; i += 1) {
       const d = new Date();
       d.setDate(today.getDate() + i);
       const formatted = formatDateInput(d);
       const isBlocked = blockedSet.has(formatted);
-      const key = DAY_KEYS[d.getDay()];
-      const hasHours = config?.hours ? parseTramos((config.hours as any)?.[key]).length > 0 : false;
-      if (config?.slots && config.slots.length > 0) {
-        dates.push({ date: formatted, blocked: isBlocked });
-      } else if (hasHours) {
-        dates.push({ date: formatted, blocked: isBlocked });
-      }
+      dates.push({ date: formatted, blocked: isBlocked });
     }
     return dates;
-  }, [config?.hours, config?.slots, config?.blockedDates, config?.enabled, config?.maxDays]);
+  }, [config?.blockedDates, config?.enabled, config?.maxDays]);
 
   const timesForSelectedDate = useMemo(() => {
     if (!selectedDate || !config?.enabled) return [];
-    const today = new Date();
-    const dt = new Date(selectedDate + "T00:00:00");
-    const minDate = sameDay(dt, today) ? new Date() : undefined;
 
-    // Si hay slots personalizados, construir a partir de ellos
     if (config?.slots && config.slots.length > 0) {
-      return buildSlotsFromCustom(config.slots, selectedDate, config.leadHours ?? null);
+      return buildSlotsFromShifts(config.slots, config.interval, selectedDate, config.leadHours ?? null);
     }
 
-    if (!config?.hours) return [];
-    const key = DAY_KEYS[dt.getDay()];
-    const tramos = parseTramos((config.hours as any)?.[key]);
-    if (tramos.length === 0) return [];
-    return buildSlots(tramos, minDate);
-  }, [selectedDate, config?.slots, config?.hours, config?.enabled, config?.leadHours]);
+    return [];
+  }, [selectedDate, config?.slots, config?.interval, config?.enabled, config?.leadHours]);
 
   useEffect(() => {
     setDatesWithStatus(availableDates);
   }, [availableDates]);
 
   useEffect(() => {
-    // Prefer the first no-bloqueada
     if (!selectedDate && datesWithStatus.length > 0) {
       const firstAllowed = datesWithStatus.find((d) => !d.blocked)?.date || datesWithStatus[0].date;
       setSelectedDate(firstAllowed);
@@ -202,35 +214,29 @@ export default function ReservationsClient() {
 
   useEffect(() => {
     if (timesForSelectedDate.length > 0) {
-      setSelectedTime(timesForSelectedDate[0]);
+      if (!timesForSelectedDate.includes(selectedTime)) {
+        setSelectedTime(timesForSelectedDate[0]);
+      }
       setUiHint(null);
     } else {
       setSelectedTime("");
       if (selectedDate) {
-        const blocked = config?.blockedDates?.includes(selectedDate);
-        if (blocked) {
-          setUiHint("No se aceptan reservas en esta fecha.");
-        } else if (config?.slots && config.slots.length > 0) {
-          setUiHint("No hay horarios disponibles para esta fecha.");
-        } else {
-          setUiHint("La fecha seleccionada no tiene horario disponible.");
-        }
-      } else {
-        setUiHint(null);
+        setUiHint("No hay horarios disponibles para esta fecha.");
       }
     }
-  }, [timesForSelectedDate, selectedDate, config?.blockedDates, config?.slots]);
+  }, [timesForSelectedDate, selectedDate, selectedTime]);
 
   async function submitReservation(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedDate || !selectedTime) {
-      setMessage("Selecciona una fecha y hora disponibles.");
-      return;
+    if (!selectedDate || !selectedTime) return setMessage("Selecciona fecha y hora.");
+
+    const enabledZones = config?.zones?.filter(z => z.enabled) || [];
+    if (enabledZones.length > 0 && !selectedZone) {
+      return setMessage("Por favor, selecciona una zona.");
     }
-    if (!customerName || !customerPhone) {
-      setMessage("Indica tu nombre y teléfono.");
-      return;
-    }
+
+    if (!customerName || !customerPhone) return setMessage("Faltan tus datos de contacto.");
+
     setSubmitting(true);
     setMessage(null);
     try {
@@ -248,6 +254,7 @@ export default function ReservationsClient() {
           email: customerEmail,
           people,
           notes,
+          zoneId: selectedZone,
           tzOffsetMinutes: new Date().getTimezoneOffset(),
         }),
       });
@@ -255,11 +262,7 @@ export default function ReservationsClient() {
       if (!resp.ok || !j?.ok) {
         throw new Error(j?.message || "No se pudo registrar la reserva");
       }
-      setMessage("¡Reserva enviada! Te confirmaremos por correo.");
-      setCustomerName("");
-      setCustomerPhone("");
-      setCustomerEmail("");
-      setNotes("");
+      setSuccess(true);
     } catch (err: any) {
       setMessage(err?.message || "No se pudo enviar la reserva");
     } finally {
@@ -270,7 +273,7 @@ export default function ReservationsClient() {
   if (loading) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-sm text-slate-600">Cargando configuración…</div>
+        <Loader2 className="animate-spin text-slate-400" />
       </main>
     );
   }
@@ -278,122 +281,231 @@ export default function ReservationsClient() {
   if (error || !config?.enabled) {
     return (
       <main className="min-h-[60vh] flex items-center justify-center px-4">
-        <div className="max-w-md rounded border bg-white p-6 text-center shadow">
-          <h1 className="text-xl font-semibold mb-2">Reservas no disponibles</h1>
-          <p className="text-sm text-slate-600">{error || "El restaurante no acepta reservas online en este momento."}</p>
+        <div className="max-w-md rounded-xl border bg-white p-8 text-center shadow-sm">
+          <CalendarIcon className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+          <h1 className="text-xl font-semibold mb-2 text-slate-900">Reservas no disponibles</h1>
+          <p className="text-sm text-slate-500">{error || "El restaurante no acepta reservas online en este momento."}</p>
         </div>
       </main>
     );
   }
 
+  if (success) {
+    return (
+      <main className="max-w-md mx-auto px-4 py-20 text-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-emerald-100">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">¡Reserva Solicitada!</h1>
+          <p className="text-slate-600 mb-6">
+            Hemos recibido tu solicitud para el <strong>{new Date(selectedDate).toLocaleDateString()}</strong> a las <strong>{selectedTime}</strong>.
+            <br />Te confirmaremos por email en breve.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-emerald-600 font-medium hover:underline"
+          >
+            Realizar otra reserva
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  const enabledZones = config.zones?.filter(z => z.enabled) || [];
+
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
-      <header className="mb-8 text-center space-y-2">
-        {config.businessLogo && <img src={config.businessLogo} alt={config.businessName} className="mx-auto h-20 object-contain" />}
-        <h1 className="text-3xl font-semibold">{config.businessName}</h1>
-        <p className="text-sm text-slate-600">Reserva tu mesa en pocos pasos.</p>
+    <main className="max-w-5xl mx-auto px-4 py-8 md:py-12">
+      <header className="mb-10 text-center space-y-3">
+        {config.businessLogo && <img src={config.businessLogo} alt={config.businessName} className="mx-auto h-20 w-auto object-contain" />}
+        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{config.businessName}</h1>
+        <p className="text-base text-slate-500">Reserva tu mesa online</p>
       </header>
 
-      <form onSubmit={submitReservation} className="grid gap-6 md:grid-cols-[1.1fr,0.9fr]">
-        <section className="rounded-2xl border bg-white p-5 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold text-slate-800">Selecciona fecha y hora</h2>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Día</label>
-            <select
-              className="w-full rounded border px-3 py-2"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            >
-              {datesWithStatus.length === 0 && <option>No hay fechas disponibles</option>}
-              {datesWithStatus.map(({ date, blocked }) => {
-                const dt = new Date(date + "T00:00:00");
-                return (
-                  <option key={date} value={date} disabled={blocked}>
-                    {DAY_LABELS[dt.getDay()]} {dt.toLocaleDateString("es-ES")}
-                    {blocked ? " — No se aceptan reservas" : ""}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Hora</label>
-            <select
-              className="w-full rounded border px-3 py-2"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              disabled={timesForSelectedDate.length === 0}
-            >
-              {timesForSelectedDate.length === 0 ? <option>No hay horarios disponibles</option> : null}
-              {timesForSelectedDate.map((time) => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
-            {uiHint && <p className="text-xs text-amber-600">{uiHint}</p>}
-          </div>
-        </section>
+      <form onSubmit={submitReservation} className="grid lg:grid-cols-[1fr,400px] gap-8">
 
-        <section className="rounded-2xl border bg-white p-5 shadow-sm space-y-4">
-          <h2 className="text-lg font-semibold text-slate-800">Tus datos</h2>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Nombre</label>
-            <input
-              className="mt-1 w-full rounded border px-3 py-2"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Teléfono</label>
-            <input
-              className="mt-1 w-full rounded border px-3 py-2"
-              value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Email (opcional)</label>
-            <input
-              type="email"
-              className="mt-1 w-full rounded border px-3 py-2"
-              value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Número de comensales</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              className="mt-1 w-full rounded border px-3 py-2"
-              value={people}
-              onChange={(e) => setPeople(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Notas adicionales (opcional)</label>
-            <textarea
-              className="mt-1 w-full rounded border px-3 py-2"
-              rows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Alergias, preferencias, etc."
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded bg-emerald-600 py-2 text-white font-medium hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {submitting ? "Enviando reserva…" : "Enviar reserva"}
-          </button>
-          {message && <p className="text-sm text-center text-slate-600">{message}</p>}
-        </section>
+        {/* Left Column: Selection */}
+        <div className="space-y-6">
+
+          {/* Zone Selection */}
+          {enabledZones.length > 1 && (
+            <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-600" />
+                ¿Dónde quieres sentarte?
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {enabledZones.map(zone => (
+                  <label
+                    key={zone.id}
+                    className={`cursor-pointer border rounded-xl p-4 transition-all flex items-center justify-between group
+                                    ${selectedZone === zone.id
+                        ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
+                        : 'border-slate-200 hover:border-emerald-200 hover:bg-slate-50'
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="zone"
+                      value={zone.id}
+                      checked={selectedZone === zone.id}
+                      onChange={() => setSelectedZone(zone.id)}
+                      className="sr-only"
+                    />
+                    <div>
+                      <span className={`block font-semibold ${selectedZone === zone.id ? 'text-emerald-900' : 'text-slate-700'}`}>
+                        {zone.name}
+                      </span>
+                      <span className="text-xs text-slate-500">Capacidad: {zone.capacity} pax</span>
+                    </div>
+                    {selectedZone === zone.id && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Date & Time */}
+          <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <CalendarIcon className="w-5 h-5 text-emerald-600" />
+              ¿Cuándo?
+            </h2>
+
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha</label>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-700 font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                >
+                  {datesWithStatus.length === 0 && <option>No hay fechas disponibles</option>}
+                  {datesWithStatus.map(({ date, blocked }) => {
+                    const dt = new Date(date + "T00:00:00");
+                    return (
+                      <option key={date} value={date} disabled={blocked}>
+                        {DAY_LABELS[dt.getDay()]} {dt.toLocaleDateString("es-ES")}
+                        {blocked ? " (Completo/Cerrado)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+                <CalendarIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Hora</label>
+              {timesForSelectedDate.length > 0 ? (
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                  {timesForSelectedDate.map((time) => (
+                    <button
+                      type="button"
+                      key={time}
+                      onClick={() => setSelectedTime(time)}
+                      className={`py-2 px-1 rounded-lg text-sm font-semibold transition-all
+                                        ${selectedTime === time
+                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700'
+                        }`}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-6 bg-slate-50 rounded-xl text-slate-500 text-sm">
+                  {uiHint || "No hay horarios disponibles para este día."}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* Right Column: Details */}
+        <div className="space-y-6">
+          <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sticky top-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <User className="w-5 h-5 text-emerald-600" />
+              Tus Datos
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Nombre</label>
+                <input
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  required
+                  placeholder="Ej: Juan Pérez"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Teléfono</label>
+                <input
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  required
+                  placeholder="Ej: 600 000 000"
+                />
+              </div>
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Email <span className="text-slate-300 font-normal normal-case">(Opcional)</span></label>
+                <input
+                  type="email"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="Para recibir confirmación"
+                />
+              </div>
+
+              <div className="pt-2">
+                <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Comensales</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={1}
+                    max={20}
+                    value={people}
+                    onChange={(e) => setPeople(Number(e.target.value))}
+                    className="flex-1 accent-emerald-600 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="w-12 h-10 flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-100">
+                    {people}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase font-bold text-slate-400 mb-1">Notas</label>
+                <textarea
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none transition-all text-sm"
+                  rows={2}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Alergias, trona, etc."
+                />
+              </div>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-slate-100">
+              <button
+                type="submit"
+                disabled={submitting || !selectedTime}
+                className="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-xl hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/30"
+              >
+                {submitting ? "Enviando..." : "Confirmar Reserva"}
+              </button>
+              {message && <p className="mt-3 text-sm text-center text-rose-500 font-medium animate-in fade-in">{message}</p>}
+            </div>
+
+          </section>
+        </div>
       </form>
     </main>
   );

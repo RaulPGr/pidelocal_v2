@@ -30,9 +30,11 @@ export default function ReservationsConfig() {
     // Shifts
     const [shifts, setShifts] = useState<Shift[]>([]);
 
-    // Auto Confirm
+    // Auto Confirm & Settings
     const [autoConfirm, setAutoConfirm] = useState(false);
     const [capacity, setCapacity] = useState(0);
+    const [interval, setIntervalVal] = useState(30);
+    const [duration, setDuration] = useState(90);
 
     async function load() {
         setLoading(true);
@@ -59,6 +61,8 @@ export default function ReservationsConfig() {
 
                 setAutoConfirm(!!d.reservations_auto_confirm);
                 setCapacity(d.reservations_capacity || 0);
+                setIntervalVal(d.reservations_interval || 30);
+                setDuration(d.reservations_duration || 90);
             }
         } catch (e) {
             console.error(e);
@@ -83,7 +87,9 @@ export default function ReservationsConfig() {
                     reservations_zones: zones,
                     reservations_slots: shifts,
                     reservations_auto_confirm: autoConfirm,
-                    reservations_capacity: capacity
+                    reservations_capacity: capacity,
+                    reservations_interval: interval,
+                    reservations_duration: duration
                 })
             });
 
@@ -293,8 +299,35 @@ export default function ReservationsConfig() {
             <div className="glass-panel p-6">
                 <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <Clock className="w-5 h-5 text-amber-500" />
-                    Automatización
+                    Configuración General
                 </h3>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label className="text-xs uppercase font-bold text-slate-400 mb-1 block">Intervalo entre reservas (min)</label>
+                        <p className="text-xs text-slate-500 mb-2">Cada cuánto se muestran horas (Ej: 30 = 13:00, 13:30...)</p>
+                        <input
+                            type="number"
+                            min={15}
+                            step={15}
+                            value={interval}
+                            onChange={e => setIntervalVal(Number(e.target.value))}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-700 font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs uppercase font-bold text-slate-400 mb-1 block">Duración media (min)</label>
+                        <p className="text-xs text-slate-500 mb-2">Tiempo estimado de ocupación de mesa.</p>
+                        <input
+                            type="number"
+                            min={30}
+                            step={15}
+                            value={duration}
+                            onChange={e => setDuration(Number(e.target.value))}
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-700 font-medium focus:ring-2 focus:ring-amber-500 outline-none"
+                        />
+                    </div>
+                </div>
 
                 <div className="flex items-center gap-4">
                     <label className="flex items-center gap-3 cursor-pointer p-4 bg-slate-50 border border-slate-100 rounded-xl hover:bg-white hover:shadow-sm transition-all flex-1">
