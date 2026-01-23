@@ -41,10 +41,10 @@ function normalizeSlug(v: string | null | undefined): string {
 async function getTenantSlug(req?: Request) {
   // 1) Permite ?tenant= (útil en previews)
   let slug = '';
-  try { if (req) { const u = new URL(req.url); slug = normalizeSlug(u.searchParams.get('tenant')); } } catch {}
+  try { if (req) { const u = new URL(req.url); slug = normalizeSlug(u.searchParams.get('tenant')); } } catch { }
   // 2) Cookie puesta por middleware o manualmente
   if (!slug) {
-    try { const cookieStore = await cookies(); slug = normalizeSlug(cookieStore.get('x-tenant-slug')?.value); } catch {}
+    try { const cookieStore = await cookies(); slug = normalizeSlug(cookieStore.get('x-tenant-slug')?.value); } catch { }
   }
   // 3) Subdominio del host (producción)
   if (!slug) {
@@ -53,7 +53,7 @@ async function getTenantSlug(req?: Request) {
       const host = (hdrs.get('host') || '').split(':')[0];
       const parts = host.split('.');
       if (parts.length >= 3) slug = normalizeSlug(parts[0]);
-    } catch {}
+    } catch { }
   }
   return slug;
 }
@@ -120,7 +120,7 @@ export async function PATCH(req: Request) {
 
     const body = await req.json();
     const updates: any = {};
-    for (const k of ['name','slogan','description','logo_url','hero_url','phone','whatsapp','email','address_line','city','postal_code','lat','lng']) {
+    for (const k of ['name', 'slogan', 'description', 'logo_url', 'hero_url', 'phone', 'whatsapp', 'email', 'address_line', 'city', 'postal_code', 'lat', 'lng']) {
       if (k in body) updates[k] = body[k] === '' ? null : body[k];
     }
     if ('menu_mode' in body) {
@@ -210,14 +210,14 @@ export async function PATCH(req: Request) {
       try {
         const raw = Array.isArray(body.reservations_slots) ? body.reservations_slots : JSON.parse(body.reservations_slots);
         if (Array.isArray(raw)) socialUpdates.reservations_slots = raw;
-      } catch {}
+      } catch { }
     }
     if (body.reservations_zones !== undefined) {
       if (!socialUpdates) socialUpdates = { ...socialBase };
       try {
         const raw = Array.isArray(body.reservations_zones) ? body.reservations_zones : JSON.parse(body.reservations_zones);
         if (Array.isArray(raw)) socialUpdates.reservations_zones = raw;
-      } catch {}
+      } catch { }
     }
     if (body.reservations_lead_hours !== undefined) {
       if (!socialUpdates) socialUpdates = { ...socialBase };
@@ -240,7 +240,17 @@ export async function PATCH(req: Request) {
           ? body.reservations_blocked_dates
           : JSON.parse(body.reservations_blocked_dates);
         if (Array.isArray(raw)) socialUpdates.reservations_blocked_dates = raw;
-      } catch {}
+      } catch { }
+    }
+    if (body.reservations_interval !== undefined) {
+      if (!socialUpdates) socialUpdates = { ...socialBase };
+      const v = Number(body.reservations_interval);
+      socialUpdates.reservations_interval = Number.isFinite(v) && v > 0 ? Math.floor(v) : 30;
+    }
+    if (body.reservations_duration !== undefined) {
+      if (!socialUpdates) socialUpdates = { ...socialBase };
+      const v = Number(body.reservations_duration);
+      socialUpdates.reservations_duration = Number.isFinite(v) && v > 0 ? Math.floor(v) : 90;
     }
     if (body.menu_layout !== undefined) {
       const raw = typeof body.menu_layout === 'string' ? body.menu_layout.trim().toLowerCase() : '';
