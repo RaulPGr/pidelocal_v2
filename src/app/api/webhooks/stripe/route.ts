@@ -50,6 +50,20 @@ export async function POST(req: NextRequest) {
                     .single();
 
                 if (business) {
+                    // --- PUSH NOTIFICATION TRIGGER ---
+                    try {
+                        const { sendPushToBusiness } = await import('@/lib/notifications');
+                        await sendPushToBusiness(business.id, {
+                            title: '💳 Nuevo Pedido (Pagado)',
+                            body: `Pedido #${order.code} pagado por ${(order.total_cents / 100).toFixed(2)}€`,
+                            url: `/admin/orders?highlight=${order.id}`,
+                            tag: 'new-order-paid'
+                        });
+                    } catch (err) {
+                        console.error('Error sending push in webhook:', err);
+                    }
+                    // ---------------------------------
+
                     try {
                         // Prepare Items for Email
                         const optionLabel = (opt: any) => {

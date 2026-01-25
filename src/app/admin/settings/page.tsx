@@ -8,6 +8,7 @@ import { useAdminAccess } from "@/context/AdminAccessContext";
 import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/subscription";
 import { Store, Calendar, ShoppingBag, CreditCard, Clock } from "lucide-react";
 import clsx from "clsx";
+import PushNotificationManager from "@/components/admin/PushNotificationManager";
 
 export default function SettingsPage() {
   const { plan, isSuper } = useAdminAccess();
@@ -54,7 +55,16 @@ export default function SettingsPage() {
       {/* Content */}
       <div className="min-h-[400px] animate-in fade-in slide-in-from-bottom-2 duration-300">
         {activeTab === "business" && (
-          <BusinessSettingsClient mode="full" />
+          <div className="space-y-6">
+            <div className="glass-panel p-6 rounded-2xl flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900">Notificaciones PUSH</h3>
+                <p className="text-sm text-slate-500">Recibe avisos en tu móvil incluso cuando esté bloqueado.</p>
+              </div>
+              <PushNotificationManager />
+            </div>
+            <BusinessSettingsClient mode="full" />
+          </div>
         )}
 
 

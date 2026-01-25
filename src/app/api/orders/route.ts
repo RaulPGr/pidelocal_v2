@@ -438,6 +438,17 @@ export async function POST(req: NextRequest) {
             .eq('id', (tenant as any)?.id || null)
             .maybeSingle();
 
+          // --- PUSH NOTIFICATION TRIGGER ---
+          // Send push to all subscribed devices for this business
+          const { sendPushToBusiness } = await import('@/lib/notifications');
+          await sendPushToBusiness((tenant as any)?.id, {
+            title: '💰 Nuevo Pedido (Efectivo)',
+            body: `Pedido #${code} por ${(finalTotalCents / 100).toFixed(2)}€`,
+            url: `/admin/orders?highlight=${orderId}`,
+            tag: 'new-order'
+          });
+          // ---------------------------------
+
           const optionLabel = (opt: any) => {
             const base = opt.group_name_snapshot ? `${opt.group_name_snapshot}: ${opt.name_snapshot}` : opt.name_snapshot;
             const priceDelta = Number(opt.price_delta_snapshot || 0);

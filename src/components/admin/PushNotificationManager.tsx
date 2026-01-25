@@ -1,0 +1,122 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Bell, BellOff, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+/**
+ * Helper to convert VAPID key
+ */
+function urlBase64ToUint8Array(base64String: string) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+export default function PushNotificationManager() {
+    const [isSupported, setIsSupported] = useState(false);
+    const [subscription, setSubscription] = useState<PushSubscription | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            setIsSupported(true);
+            registerServiceWorker();
+        } else {
+            setLoading(false);
+        }
+    }, []);
+
+    async function registerServiceWorker() {
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            const sub = await registration.pushManager.getSubscription();
+            setSubscription(sub);
+        } catch (error) {
+            console.error('Service Worker Error', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function subscribeToPush() {
+        setLoading(true);
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+
+            if (!vapidPublicKey) {
+                toast.error('Falta la configuración push (VAPID Key)');
+                return;
+            }
+
+            const sub = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+
+            setSubscription(sub);
+
+            // Save to Backend
+            // We need the tenant slug. We can grab it from cookie or window location if needed, 
+            // but ideally we should pass it or let the backend infer it from cookie.
+            // Let's try to get it from cookie "x-tenant-slug" or localstorage "xTenant"
+            let slug = '';
+            const match = document.cookie.match(new RegExp('(^| )x-tenant-slug=([^;]+)'));
+            if (match) slug = match[2];
+
+            await fetch('/api/notifications/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription: sub, slug })
+            });
+
+            toast.success('Notificaciones activadas', { description: 'Recibirás avisos incluso con el móvil bloqueado.' });
+        } catch (error) {
+            console.error(error);
+            toast.error('No se pudo activar las notificaciones');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (!isSupported) {
+        return (
+            <div className="text-xs text-slate-400 italic">
+                Tu navegador no soporta notificaciones push.
+            </div>
+        );
+    }
+
+    if (loading) {
+        return <Loader2 className="w-5 h-5 animate-spin text-slate-400" />;
+    }
+
+    if (subscription) {
+        return (
+            <div className="flex items-center gap-2 text-emerald-600 font-medium px-4 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                <Bell className="w-4 h-4" />
+                <span className="text-sm">Notificaciones Activas</span>
+            </div>
+        );
+    }
+
+    return (
+        <button
+            onClick={subscribeToPush}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md active:scale-95"
+        >
+            <Bell className="w-4 h-4" />
+            <span className="text-sm font-bold">Activar Alertas Móvil</span>
+        </button>
+    );
+}
