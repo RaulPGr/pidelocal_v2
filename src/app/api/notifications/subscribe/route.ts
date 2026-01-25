@@ -1,7 +1,7 @@
-// src/app/api/notifications/subscribe/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
+import { cookies } from 'next/headers';
 
 export async function POST(req: NextRequest) {
     try {
@@ -20,33 +20,46 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 });
         }
 
-        // 2. Find Business owned by User
-        // Assume 1:1 relationship for now or check 'businesses' table where user_id = user.id
-        // In this project, 'businesses' table usually has 'user_id' or we can check via admin context logic.
-        // Let's assume businesses table has user_id. If not, we might need a different lookup.
-        // Checking schema via context is hard, but based on previous code, businesses table likely has user_id or we are the owner.
-        // Let's try select id from businesses where user_id = user.id.
+        // 2. Find Business (Slug + Membership)
+        const cookieStore = await cookies();
+        const slug = cookieStore.get('x-tenant-slug')?.value || '';
 
-        let businessId: string | null = null;
+        if (!slug) {
+            return NextResponse.json({ ok: false, message: 'No tenant slug (recarga la pagina)' }, { status: 400 });
+        }
 
-        // Try strict ownership first
-        const { data: ownedBusiness } = await supabaseAdmin
+        const { data: biz } = await supabaseAdmin
             .from('businesses')
             .select('id')
+            .eq('slug', slug)
+            .maybeSingle();
+
+        if (!biz) {
+            return NextResponse.json({ ok: false, message: 'Negocio no encontrado' }, { status: 404 });
+        }
+
+        // Check Membership
+        const { data: member } = await supabaseAdmin
+            .from('business_members')
+            .select('user_id')
+            .eq('business_id', biz.id)
             .eq('user_id', user.id)
             .maybeSingle();
 
-        if (ownedBusiness) {
-            businessId = ownedBusiness.id;
-        } else {
-            // Fallback: If 'slug' is provided AND user is authorized for that slug (e.g. via RLS or logic), use it.
-            // But for security, let's stick to ownership or "admin_access" table if it exists.
-            // Based on "useAdminAccess" context, there might be a relation.
-            // Let's just return 404 if no owned business found for now, to be safe.
-            // Wait, the user might be a staff member?
-            // If plan is 'medium'/'premium', maybe they are the owner.
-            return NextResponse.json({ ok: false, message: 'No business found for user' }, { status: 404 });
+        if (!member) {
+            const { data: owner } = await supabaseAdmin
+                .from('businesses')
+                .select('id')
+                .eq('id', biz.id)
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (!owner) {
+                return NextResponse.json({ ok: false, message: 'No tienes acceso a este negocio' }, { status: 403 });
+            }
         }
+
+        const businessId = biz.id;
 
         // 3. Save Subscription
         const { error } = await supabaseAdmin
