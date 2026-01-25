@@ -67,17 +67,11 @@ export default function PushNotificationManager() {
             setSubscription(sub);
 
             // Save to Backend
-            // We need the tenant slug. We can grab it from cookie or window location if needed, 
-            // but ideally we should pass it or let the backend infer it from cookie.
-            // Let's try to get it from cookie "x-tenant-slug" or localstorage "xTenant"
-            let slug = '';
-            const match = document.cookie.match(new RegExp('(^| )x-tenant-slug=([^;]+)'));
-            if (match) slug = match[2];
-
+            // Authentication is handled via cookies automatically
             await fetch('/api/notifications/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subscription: sub, slug })
+                body: JSON.stringify({ subscription: sub })
             });
 
             toast.success('Notificaciones activadas', { description: 'Recibirás avisos incluso con el móvil bloqueado.' });
