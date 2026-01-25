@@ -8,8 +8,9 @@ import { sendPushToBusiness } from '@/lib/notifications';
 export async function POST(req: NextRequest) {
     try {
         // 1. Authenticate
+        // 1. Authenticate
         const cookieStore = await cookies();
-        const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+        const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
