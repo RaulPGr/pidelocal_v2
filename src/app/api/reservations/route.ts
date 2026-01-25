@@ -298,6 +298,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Telegram
+    // --- PUSH NOTIFICATION TRIGGER ---
+    try {
+      const { sendPushToBusiness } = await import('@/lib/notifications');
+      const reservedFor = formatReservationTimestamp(reservedAt, tzOffsetMinutes);
+      await sendPushToBusiness(tenant.id, {
+        title: '📅 Nueva Reserva',
+        body: `${name} (${people} pers) - ${reservedFor}`,
+        url: `/admin/reservations`,
+        tag: 'new-reservation'
+      });
+    } catch (err: any) {
+      console.error('Error sending push for reservation:', err);
+    }
+    // ---------------------------------
+
     const telegramResEnabled = !!social?.telegram_reservations_enabled;
     const telegramResToken = social?.telegram_reservations_bot_token || social?.telegram_bot_token || '';
     const telegramResChatId = social?.telegram_reservations_chat_id || social?.telegram_chat_id || '';
