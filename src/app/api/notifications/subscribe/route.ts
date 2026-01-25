@@ -47,15 +47,22 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
         if (!member) {
-            const { data: owner } = await supabaseAdmin
-                .from('businesses')
-                .select('id')
-                .eq('id', biz.id)
-                .eq('user_id', user.id)
-                .maybeSingle();
+            // Check Super Admin
+            const { adminEmails } = await import('@/utils/plan');
+            const admins = adminEmails();
+            const isSuper = user.email && admins.includes(user.email.toLowerCase());
 
-            if (!owner) {
-                return NextResponse.json({ ok: false, message: 'No tienes acceso a este negocio' }, { status: 403 });
+            if (!isSuper) {
+                const { data: owner } = await supabaseAdmin
+                    .from('businesses')
+                    .select('id')
+                    .eq('id', biz.id)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (!owner) {
+                    return NextResponse.json({ ok: false, message: 'No tienes acceso a este negocio' }, { status: 403 });
+                }
             }
         }
 
