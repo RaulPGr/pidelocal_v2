@@ -1,8 +1,7 @@
 // src/app/api/notifications/subscribe/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { createSupabaseServerClient } from '@/lib/supabaseServer';
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,10 +13,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Authenticate User
-        // 1. Authenticate User
-        const cookieStore = await cookies();
-        // @ts-ignore: Next.js 15 cookies mismatch with outdated auth-helpers types
-        const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+        const supabase = await createSupabaseServerClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
