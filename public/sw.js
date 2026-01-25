@@ -8,14 +8,14 @@ self.addEventListener('push', function (event) {
     const data = event.data ? event.data.json() : {};
     const title = data.title || 'PideLocal';
     const message = data.body || 'Tienes una nueva notificación.';
-    const icon = data.icon || '/icon-192x192.png';
+    const icon = data.icon || '/images/pidelocal.png';
     const tag = data.tag || 'simple-push';
     const url = data.url || '/admin/orders';
 
     const options = {
         body: message,
         icon: icon,
-        badge: '/icon-192x192.png',
+        badge: '/images/pidelocal.png',
         tag: tag,
         data: { url: url },
         vibrate: [200, 100, 200, 100, 200, 100, 200]
