@@ -83,10 +83,32 @@ export default function PushNotificationManager() {
         }
     }
 
+    async function unsubscribeFromPush() {
+        if (!subscription) return;
+        setLoading(true);
+        try {
+            // 1. Unsubscribe from browser
+            await subscription.unsubscribe();
+
+            // 2. Optional: Notify backend to remove (we can just let it clean up on 410, but explicit is nice)
+            // For now, fast path: just clear state.
+
+            setSubscription(null);
+            toast.success('Notificaciones desactivadas');
+        } catch (error) {
+            console.error(error);
+            toast.error('Error al desactivar');
+        } finally {
+            setLoading(false);
+        }
+    }
+
     if (!isSupported) {
         return (
             <div className="text-xs text-slate-400 italic">
-                Tu navegador no soporta notificaciones push.
+                No soportado en este dispositivo.
+                <br />
+                <span className="opacity-75">Nota: En iPhone debes "Añadir a Pantalla de Inicio" primero.</span>
             </div>
         );
     }
@@ -97,9 +119,18 @@ export default function PushNotificationManager() {
 
     if (subscription) {
         return (
-            <div className="flex items-center gap-2 text-emerald-600 font-medium px-4 py-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                <Bell className="w-4 h-4" />
-                <span className="text-sm">Notificaciones Activas</span>
+            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-emerald-600 font-medium px-4 py-2 bg-emerald-50 rounded-lg border border-emerald-100 cursor-default">
+                    <Bell className="w-4 h-4" />
+                    <span className="text-sm">Activas</span>
+                </div>
+                <button
+                    onClick={unsubscribeFromPush}
+                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Desactivar notificaciones"
+                >
+                    <BellOff className="w-4 h-4" />
+                </button>
             </div>
         );
     }
@@ -110,7 +141,7 @@ export default function PushNotificationManager() {
             className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-all shadow-md active:scale-95"
         >
             <Bell className="w-4 h-4" />
-            <span className="text-sm font-bold">Activar Alertas Móvil</span>
+            <span className="text-sm font-bold">Activar Alertas</span>
         </button>
     );
 }
