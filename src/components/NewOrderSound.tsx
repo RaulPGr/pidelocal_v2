@@ -231,7 +231,7 @@ export default function NewOrderSound({ businessId }: Props) {
   return (
     <>
       {/* Floating Controls */}
-      <div className="fixed z-50 bottom-6 right-6 flex items-center gap-2">
+      <div className="fixed z-50 bottom-6 left-6 flex items-center gap-2">
         {alertOpen && (
           <div className="absolute bottom-full mb-4 right-0 w-80 bg-white border border-slate-200 shadow-2xl rounded-2xl p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
             <div className="flex items-start gap-4">
