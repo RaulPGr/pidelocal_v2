@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
         // 1. Authenticate User
         // 1. Authenticate User
         const cookieStore = await cookies();
-        const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+        // @ts-ignore: Next.js 15 cookies mismatch with outdated auth-helpers types
+        const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
