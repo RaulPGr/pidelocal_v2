@@ -126,10 +126,19 @@ export default function PushNotificationManager() {
                 </div>
                 <button
                     onClick={async () => {
-                        toast.promise(fetch('/api/notifications/test', { method: 'POST' }), {
+                        const promise = (async () => {
+                            const res = await fetch('/api/notifications/test', { method: 'POST' });
+                            if (!res.ok) {
+                                const data = await res.json().catch(() => ({}));
+                                throw new Error(data.message || 'Error en el servidor');
+                            }
+                            return res.json();
+                        })();
+
+                        toast.promise(promise, {
                             loading: 'Enviando prueba...',
-                            success: 'Notificación enviada',
-                            error: 'Error al enviar prueba'
+                            success: 'Notificación enviada correctamente',
+                            error: (err) => `Error: ${err.message}`
                         });
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-xs font-bold uppercase tracking-wide"

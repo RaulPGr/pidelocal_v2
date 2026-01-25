@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 });
         }
 
+        // Check Env Vars
+        if (!process.env.VAPID_PRIVATE_KEY || !process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+            return NextResponse.json({ ok: false, message: 'Faltan claves VAPID en servidor' }, { status: 500 });
+        }
+
         // 2. Find Business
         const { data: ownedBusiness } = await supabaseAdmin
             .from('businesses')
