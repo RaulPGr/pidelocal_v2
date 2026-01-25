@@ -125,6 +125,19 @@ export default function PushNotificationManager() {
                     <span className="text-sm">Activas</span>
                 </div>
                 <button
+                    onClick={async () => {
+                        toast.promise(fetch('/api/notifications/test', { method: 'POST' }), {
+                            loading: 'Enviando prueba...',
+                            success: 'Notificación enviada',
+                            error: 'Error al enviar prueba'
+                        });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors text-xs font-bold uppercase tracking-wide"
+                >
+                    <Bell className="w-3 h-3" />
+                    Probar
+                </button>
+                <button
                     onClick={unsubscribeFromPush}
                     className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     title="Desactivar notificaciones"
