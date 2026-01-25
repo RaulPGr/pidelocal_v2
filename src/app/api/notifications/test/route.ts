@@ -4,7 +4,6 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendPushToBusiness } from '@/lib/notifications';
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
 import { cookies } from 'next/headers';
-import { cookies } from 'next/headers'; // Added import for cookies
 
 export async function POST(req: NextRequest) {
     try {
