@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Authenticate User
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
         const { data: { user } } = await supabase.auth.getUser();
 
