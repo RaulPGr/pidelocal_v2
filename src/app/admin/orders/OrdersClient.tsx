@@ -447,7 +447,7 @@ export default function OrdersClient() {
                     </div>
                   )}
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto max-w-full">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-100 text-slate-500 font-semibold text-xs uppercase">
                         <tr>

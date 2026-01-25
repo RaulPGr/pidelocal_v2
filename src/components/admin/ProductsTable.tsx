@@ -361,7 +361,7 @@ export default function ProductsTable({ initialProducts, categories, initialWeek
                             />
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto max-w-full">
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50/80 text-slate-500 uppercase text-xs font-semibold tracking-wider backdrop-blur-sm">
                                     <tr>
