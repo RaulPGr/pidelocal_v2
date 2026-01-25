@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Find Business (Slug + Membership)
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const slug = cookieStore.get('x-tenant-slug')?.value || '';
 
         if (!slug) {
