@@ -219,6 +219,47 @@ export default function HelpClient() {
             ]
         },
         {
+            title: "Notificaciones Móviles",
+            icon: Smartphone, // Reutilizamos icono o importamos Bell si no existe, pero Smartphone va bien
+            color: "rose",
+            items: [
+                {
+                    title: "Activar Alertas (Push)",
+                    content: (
+                        <div className="space-y-4">
+                            <p>¡No pierdas ni un pedido! Puedes recibir un aviso sonoro y visual en tu móvil cada vez que entre un pedido o reserva, incluso con el móvil bloqueado.</p>
+                            <ol className="list-decimal pl-5 space-y-2 text-slate-700">
+                                <li>Abre PideLocal Admin en tu móvil (Chrome en Android o Safari en iPhone).</li>
+                                <li>Ve al menú principal &gt; <strong>Configuración</strong>.</li>
+                                <li>Pulsa el botón grande <strong>"Activar Notificaciones"</strong>.</li>
+                                <li>Si el navegador te pregunta, dale a <strong>"Permitir"</strong>.</li>
+                            </ol>
+                            <div className="bg-emerald-50 p-3 rounded-lg text-sm text-emerald-800 border border-emerald-100">
+                                <span className="text-lg">🔔</span> <strong>Prueba de sonido:</strong> Una vez activado, verás un botón "PROBAR". Púlsalo para verificar que tu móvil suena y vibra.
+                            </div>
+                        </div>
+                    )
+                },
+                {
+                    title: "No me llegan las notificaciones",
+                    content: (
+                        <div className="space-y-4">
+                            <p>Si has activado las notificaciones pero no suenan, revisa esto:</p>
+                            <ul className="list-disc pl-5 space-y-2 text-slate-700">
+                                <li><strong>Modo No Molestar:</strong> Asegúrate de que tu móvil no está en silencio total o modo luna.</li>
+                                <li><strong>Permisos de Android/iOS:</strong> Ve a Ajustes del móvil &gt; Aplicaciones &gt; Chrome/Safari &gt; Notificaciones y asegúrate de que están permitidas.</li>
+                                <li><strong>Batería:</strong> Algunos modos de "Ahorro de batería" bloquean las notificaciones en segundo plano.</li>
+                            </ul>
+                        </div>
+                    )
+                },
+                {
+                    title: "iPhone (iOS)",
+                    content: "En iPhone, para recibir notificaciones Push es OBLIGATORIO que añadas la web a tu pantalla de inicio ('Add to Home Screen'). Apple no permite notificaciones si solo navegas desde Safari sin instalarla."
+                }
+            ]
+        },
+        {
             title: "Gestión de Reservas",
             icon: CalendarCheck,
             color: "violet",
