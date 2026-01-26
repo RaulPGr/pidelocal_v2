@@ -1,4 +1,5 @@
 import { getBusinessesList, getGlobalStats } from "./actions";
+import PlanSelector from "./PlanSelector";
 import {
     LayoutDashboard,
     TrendingUp,
@@ -133,12 +134,10 @@ export default async function SuperAdminPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide border ${biz.subscription_plan === 'premium' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                    biz.subscription_plan === 'medium' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                        'bg-slate-100 text-slate-600 border-slate-200'
-                                                }`}>
-                                                {biz.subscription_plan}
-                                            </span>
+                                            <PlanSelector
+                                                businessId={biz.id}
+                                                currentPlan={biz.subscription_plan}
+                                            />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
                                             {formatCurrency(biz.revenue_30d_cents)}

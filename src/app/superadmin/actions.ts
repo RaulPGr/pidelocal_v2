@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { revalidatePath } from "next/cache";
 
 export type GlobalStats = {
     totalRevenueCents: number;
@@ -112,4 +113,42 @@ export async function getBusinessesList(): Promise<BusinessSummary[]> {
             image_url: b.image_url
         };
     });
+}
+
+export async function updateBusinessPlan(businessId: string, newPlan: string) {
+    try {
+        const { data: biz, error: fetchError } = await supabaseAdmin
+            .from('businesses')
+            .select('theme_config')
+            .eq('id', businessId)
+            .single();
+
+        if (fetchError || !biz) throw new Error("Business not found");
+
+        // Ensure theme_config is an object
+        let currentConfig = biz.theme_config;
+        if (typeof currentConfig === 'string') {
+            try {
+                currentConfig = JSON.parse(currentConfig);
+            } catch {
+                currentConfig = {};
+            }
+        }
+        if (!currentConfig) currentConfig = {};
+
+        const newConfig = { ...currentConfig, subscription: newPlan };
+
+        const { error: updateError } = await supabaseAdmin
+            .from('businesses')
+            .update({ theme_config: newConfig })
+            .eq('id', businessId);
+
+        if (updateError) throw updateError;
+
+        revalidatePath('/superadmin');
+        return { success: true };
+    } catch (e) {
+        console.error("Error updating plan:", e);
+        return { success: false, error: 'Failed to update plan' };
+    }
 }
