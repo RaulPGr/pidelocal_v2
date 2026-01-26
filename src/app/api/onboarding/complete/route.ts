@@ -48,13 +48,20 @@ export async function POST(req: Request) {
         }
 
         // 2.5 Verify User Exists in Auth
+        // 2.5 Verify User Exists in Auth
         const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
+
         if (authCheckError || !authUser) {
+            // DIAGNOSTIC: List last 3 users to see who IS in the db
+            const { data: { users: allUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 3 });
+            const userSummary = allUsers?.map(u => `${u.email} (${u.id})`).join(", ");
+
             const debugUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "MISSING";
             const debugKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").substring(0, 10) + "...";
-            console.error("User not found in Auth:", authCheckError);
+
+            console.error("User not found.", authCheckError);
             return NextResponse.json({
-                error: `Error Auth (Server): ${authCheckError?.message}. DebugURL: ${debugUrl}, Key: ${debugKey}, ID: ${userId}`
+                error: `Error Auth (Server): User NOT found. DB says users are: [${userSummary || "None"}]. ListErr: ${listError?.message}. URL: ${debugUrl}, ID looked for: ${userId}`
             }, { status: 500 });
         }
 
