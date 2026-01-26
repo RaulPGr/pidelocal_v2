@@ -424,6 +424,22 @@ export default function HelpClient({ businessId }: { businessId: string }) {
                 </div>
             </div>
 
+            {/* Support Widget Modal/Popover */}
+            {showSupport && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSupport(false)} />
+                    <div className="relative w-full max-w-md animate-in zoom-in-95 duration-200">
+                        <SupportWidget businessId={businessId} />
+                        <button
+                            onClick={() => setShowSupport(false)}
+                            className="absolute -top-12 right-0 text-white/80 hover:text-white"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Help Details Modal */}
             {selectedGuide && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
