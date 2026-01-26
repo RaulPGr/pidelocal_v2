@@ -27,6 +27,8 @@ create table if not exists public.support_messages (
 alter table public.support_tickets enable row level security;
 alter table public.support_messages enable row level security;
 
+-- Policies for tickets (Simplified for now - we will enforce via Server Actions mostly, but good to have)
+-- We allow authenticated users to view tickets if they belong to the business.
 create policy "Ticket access for members" on public.support_tickets
     for select using (
         business_id in (
@@ -41,6 +43,7 @@ create policy "Ticket insert for members" on public.support_tickets
         )
     );
 
+-- Messages policies
 create policy "Message access for members" on public.support_messages
     for select using (
         ticket_id in (
@@ -60,3 +63,6 @@ create policy "Message insert for members" on public.support_messages
             )
         )
     );
+
+-- SuperAdmin Access (Usually disabled RLS for service role, but if we log in as superadmin user:
+-- We assume SuperAdmin uses Service Role or specific checks. For now we will rely on Service Role in our Actions).

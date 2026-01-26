@@ -277,3 +277,73 @@ export async function removeBusinessMember(businessId: string, userId: string) {
         return { success: false, error: e.message };
     }
 }
+
+// --- SUPPORT SYSTEM (SUPERADMIN) ---
+
+export async function getAllSupportTickets() {
+    const { data } = await supabaseAdmin
+        .from("support_tickets")
+        .select(`
+            *,
+            business:businesses(name, slug)
+        `)
+        .order("updated_at", { ascending: false });
+    return data || [];
+}
+
+export async function getTicketDetails(ticketId: string) {
+    const { data: ticket } = await supabaseAdmin
+        .from("support_tickets")
+        .select(`
+            *,
+            business:businesses(id, name, slug, email)
+        `)
+        .eq("id", ticketId)
+        .single();
+
+    if (!ticket) return null;
+
+    const { data: messages } = await supabaseAdmin
+        .from("support_messages")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+    return { ticket, messages: messages || [] };
+}
+
+export async function adminReplyTicket(ticketId: string, message: string) {
+    try {
+        await supabaseAdmin
+            .from("support_messages")
+            .insert({
+                ticket_id: ticketId,
+                sender_role: "superadmin",
+                message
+            });
+
+        await supabaseAdmin
+            .from("support_tickets")
+            .update({
+                status: 'answered',
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", ticketId);
+
+        revalidatePath(`/superadmin/support/${ticketId}`);
+        revalidatePath(`/superadmin/support`);
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+export async function closeTicket(ticketId: string) {
+    await supabaseAdmin
+        .from("support_tickets")
+        .update({ status: 'closed' })
+        .eq("id", ticketId);
+
+    revalidatePath(`/superadmin/support`);
+    return { success: true };
+}
