@@ -142,30 +142,52 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
   const showOnboarding = forceOnboarding || (business && (!business.logo_url || !business.opening_hours));
 
   const slug = await getTenantSlug();
-  const stats = slug ? await getStats(slug) : { sales: 0, orders: 0, reservations: 0, customers: 0 };
+  // Ensure fallback matches the return type of getStats
+  const stats = slug ? await getStats(slug) : { sales: 0, orders: 0, reservations: 0, customers: 0, monthlyOrders: 0, plan: 'starter' };
   const activity = slug ? await getActivity(slug) : [];
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
-      <p className="text-slate-500 mt-1">Visión general de tu negocio hoy.</p>
-    </div>
+    <div className="space-y-8 relative">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Panel de Control</h1>
+        <p className="text-slate-500 mt-1">Visión general de tu negocio hoy.</p>
+      </div>
 
-      {/* FREEMIUM LIMIT WIDGET */ }
-  {
-    (() => {
-      // Warning: This async IIFE logic is tricky in JSX unless we pre-calc.
-      // Better to move logic up to component and pass down.
-      // Ignoring for now since we are in RSC, but fetching logic below is cleaner.
-      return null;
-    })()
-  }
+      {/* FREEMIUM LIMIT WIDGET */}
+      {(stats.plan === 'starter' || stats.plan === 'starter (piloto)') && (
+        <div className="bg-slate-900 rounded-2xl p-6 text-white overflow-hidden relative shadow-xl">
+          <div className="absolute right-0 top-0 w-64 h-64 bg-orange-500 rounded-full blur-[80px] opacity-20 -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
+            <div className="flex-1 w-full">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">Plan Piloto (Gratis)</span>
+              </div>
+              <h3 className="text-lg font-bold mb-1">Tu progreso mensual</h3>
+              <p className="text-slate-400 text-sm mb-4">Tienes un límite de 30 pedidos gratuitos al mes.</p>
 
-  {/* 
-        NOTE: Since I cannot easily inject complex async logic mid-JSX without refactoring `getStats` or component, 
-        I will modify `getStats` to return monthly count and plan, and render it properly.
-      */}
-  { props.usageWidget }
+              <div className="flex items-end gap-2 mb-2">
+                <span className="text-3xl font-black">{stats.monthlyOrders}</span>
+                <span className="text-sm text-slate-400 mb-1.5">/ 30 pedidos</span>
+              </div>
+
+              <div className="h-2 bg-slate-800 rounded-full overflow-hidden w-full max-w-sm">
+                <div
+                  className={`h-full rounded-full transition-all ${stats.monthlyOrders >= 30 ? 'bg-red-500' : 'bg-gradient-to-r from-orange-500 to-amber-500'}`}
+                  style={{ width: `${Math.min(100, (stats.monthlyOrders / 30) * 100)}%` }}
+                />
+              </div>
+              {stats.monthlyOrders >= 30 && (
+                <p className="text-red-400 text-xs font-bold mt-2 flex items-center gap-1">
+                  ⚠️ Límite alcanzado. Tus clientes no pueden pedir.
+                </p>
+              )}
+            </div>
+            <Link href="/admin/settings?tab=billing" className="w-full sm:w-auto text-center bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm hover:bg-orange-50 transition-colors shadow-lg">
+              Mejorar Plan 🚀
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <DashboardCard
@@ -236,6 +258,6 @@ export default async function AdminDashboard(props: { searchParams: Promise<{ on
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
