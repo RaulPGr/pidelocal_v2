@@ -47,6 +47,22 @@ export async function POST(req: Request) {
             }, { status: 500 });
         }
 
+        // 2.5 Ensure User Exists in public.users (mirrored from auth)
+        // This is needed because business_members references public.users, not auth.users directly.
+        const { error: upsertError } = await supabaseAdmin
+            .from("users")
+            .upsert({
+                id: userId,
+                email: email,
+                full_name: businessName, // Fallback name
+                created_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+
+        if (upsertError) {
+            console.error("Error syncing user to public table", upsertError);
+            // We continue, hoping it might exist, or fail with details below.
+        }
+
         // 3. Link User as Member (Owner)
         const { error: linkError } = await supabaseAdmin
             .from("business_members")
