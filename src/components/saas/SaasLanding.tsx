@@ -130,52 +130,108 @@ export default function SaasLanding() {
                             </ul>
 
                             <div className="flex gap-4 pt-4">
-                                <button className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M17.65 1.5c-1.37 0-2.8.5-3.9 1.1A4.5 4.5 0 0 0 11.22 0c-1.8 0-3.17 1.35-3.17 3.5 0 2.2 1.6 4.05 3.5 4.05 1.45 0 2.7-.6 3.8-1.2.65-.35 1.1-.6 1.1-.6.6.9 1.45 2.15 1.45 3.75 0 3.3-2.65 5.95-6.55 5.95-1.9 0-3.35-.95-4.45-2.05-.2-.2-.55-.2-.75 0-.2.2-.2.55 0 .75 1.25 1.25 3 2.3 5.2 2.3 4.5 0 8.05-3.4 8.05-7.45 0-1.8-.8-3.3-2.1-4.45l-.15-.15c1.1.25 2.2.4 3.3.4 2.8 0 5.25-1.5 6.6-3.8-.5.2-1.05.35-1.65.35-2.15 0-3.95-1.45-3.95-3.65 0-.95.35-1.85.9-2.55-1.4-1.35-3.3-2.2-5.4-2.2zM6.9 20.15c2.3 0 4.15 1.85 4.15 4.15 0 2.3-1.85 4.15-4.15 4.15S2.75 26.6 2.75 24.3c0-2.3 1.85-4.15 4.15-4.15z" /></svg>
-                                    App Store
-                                </button>
-                                <button className="px-6 py-3 bg-slate-800 text-white border border-slate-700 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-700 transition-colors">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M3.609 1.814L13.792 12 3.61 22.186a.912.912 0 01-1.246 0l-.305-.306a.91.91 0 010-1.267l8.47-8.613-8.47-8.613a.91.91 0 010-1.267l.305-.306a.912.912 0 011.245 0zM15.42 12l4.805 4.804c.732.732.732 1.92 0 2.652l-.305.305a1.868 1.868 0 01-2.652 0l-1.848-1.848L15.42 12zm0 0L20.07 7.35a1.868 1.868 0 012.652 0l.305.305c.732.732.732 1.92 0 2.652L15.42 12z" /></svg>
-                                    Google Play
-                                </button>
+                                <div className="px-6 py-3 bg-slate-800 text-slate-300 rounded-xl font-medium text-sm border border-slate-700/50 flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    Disponible en tu Panel de Control
+                                </div>
                             </div>
                         </div>
 
                         {/* Phone Mockup */}
                         <div className="lg:w-1/2 relative">
-                            <div className="relative mx-auto border-gray-800 bg-gray-800 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-2xl">
-                                <div className="h-[32px] w-[3px] bg-gray-800 absolute -left-[17px] top-[72px] rounded-l-lg"></div>
-                                <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[17px] top-[124px] rounded-l-lg"></div>
-                                <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[17px] top-[178px] rounded-l-lg"></div>
-                                <div className="h-[64px] w-[3px] bg-gray-800 absolute -right-[17px] top-[142px] rounded-r-lg"></div>
-                                <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-white relative">
-                                    {/* Screen Content Mockup */}
-                                    <div className="bg-slate-50 w-full h-full p-4 space-y-4">
-                                        <div className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
-                                            <span className="font-bold text-slate-800">Pedidos Activos</span>
-                                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">3 nuevos</span>
+                            <div className="relative mx-auto border-gray-900 bg-gray-900 border-[14px] rounded-[2.5rem] h-[600px] w-[300px] shadow-2xl">
+                                <div className="h-[32px] w-[3px] bg-gray-900 absolute -left-[17px] top-[72px] rounded-l-lg"></div>
+                                <div className="h-[46px] w-[3px] bg-gray-900 absolute -left-[17px] top-[124px] rounded-l-lg"></div>
+                                <div className="h-[46px] w-[3px] bg-gray-900 absolute -left-[17px] top-[178px] rounded-l-lg"></div>
+                                <div className="h-[64px] w-[3px] bg-gray-900 absolute -right-[17px] top-[142px] rounded-r-lg"></div>
+                                <div className="rounded-[2rem] overflow-hidden w-[272px] h-[572px] bg-slate-50 relative">
+                                    {/* Screen Content Mockup - MOBILE DASHBOARD MIX */}
+                                    <div className="w-full h-full overflow-hidden flex flex-col">
+                                        {/* App Header */}
+                                        <div className="bg-white p-4 pt-8 pb-4 shadow-sm z-10">
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold uppercase">Tu Restaurante</p>
+                                                    <h3 className="text-lg font-black text-slate-900 leading-none">The Burger Lab</h3>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                                                    <div className="w-2 h-2 bg-red-500 rounded-full absolute top-8 right-5 border-2 border-white"></div>
+                                                    <Smartphone className="w-4 h-4 text-slate-600" />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                                            <div className="flex justify-between mb-2">
-                                                <span className="font-bold text-slate-900">Mesa 4</span>
-                                                <span className="text-orange-500 font-bold">45,50 €</span>
+
+                                        {/* Scrollable Content */}
+                                        <div className="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
+
+                                            {/* Stats Row */}
+                                            <div className="flex gap-3">
+                                                <div className="flex-1 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Hoy</p>
+                                                    <p className="text-xl font-black text-slate-900">892 €</p>
+                                                </div>
+                                                <div className="flex-1 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Pedidos</p>
+                                                    <p className="text-xl font-black text-slate-900">24</p>
+                                                </div>
                                             </div>
-                                            <div className="space-y-1 text-sm text-slate-500">
-                                                <p>2x Hamburguesa Trufada</p>
-                                                <p>1x Patatas Bravas</p>
-                                                <p>2x Coca-Cola Zero</p>
+
+                                            {/* Notification Card */}
+                                            <div className="bg-emerald-600 text-white p-4 rounded-xl shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                                                <div className="flex justify-between items-start mb-2 relative z-10">
+                                                    <span className="font-bold text-sm bg-white/20 px-2 py-0.5 rounded text-white">Nuevo Pedido</span>
+                                                    <span className="text-xs text-emerald-100">Hace 2m</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 mb-3 relative z-10">
+                                                    <div className="w-10 h-10 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-lg">
+                                                        M4
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold">Mesa 4 (Terraza)</p>
+                                                        <p className="text-xs text-emerald-100">Juan P.</p>
+                                                    </div>
+                                                    <div className="ml-auto text-xl font-bold">45,50 €</div>
+                                                </div>
+                                                <div className="w-full bg-white text-emerald-700 py-2 rounded-lg font-bold text-center text-sm cursor-pointer shadow-sm relative z-10">
+                                                    Aceptar y Cocinar
+                                                </div>
                                             </div>
-                                            <button className="w-full mt-3 py-2 bg-emerald-500 text-white rounded-lg font-bold text-sm">Aceptar Pedido</button>
-                                        </div>
-                                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 opacity-50">
-                                            <div className="flex justify-between mb-2">
-                                                <span className="font-bold text-slate-900">Delivery #892</span>
-                                                <span className="text-slate-400 font-bold">22,00 €</span>
+
+                                            {/* Reservations Preview */}
+                                            <div>
+                                                <div className="flex justify-between items-end mb-2">
+                                                    <h4 className="font-bold text-slate-800 text-sm">Próximas Reservas</h4>
+                                                    <span className="text-[10px] text-blue-500 font-bold uppercase">Ver Agenda</span>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 flex items-center gap-3">
+                                                    <div className="bg-blue-50 text-blue-600 w-10 h-10 rounded-lg flex flex-col items-center justify-center leading-none">
+                                                        <span className="text-[10px] font-bold">HOY</span>
+                                                        <span className="text-sm font-black">21:00</span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-bold text-slate-800">Ana Martínez</p>
+                                                        <p className="text-xs text-slate-500">4 personas • Cumpleaños</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="space-y-1 text-sm text-slate-500">
-                                                <p>1x Pizza Carbonara</p>
+
+                                            {/* Menu Management Quick Action */}
+                                            <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-100 opacity-60">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="bg-orange-50 text-orange-600 w-10 h-10 rounded-lg flex items-center justify-center">
+                                                        <div className="w-5 h-5 border-2 border-current rounded-sm border-dashed" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-800">Pausar Producto</p>
+                                                        <p className="text-xs text-slate-500">"Tarta de Queso" Agotado</p>
+                                                    </div>
+                                                    <div className="ml-auto">
+                                                        <div className="w-8 h-5 bg-slate-200 rounded-full p-1"><div className="w-3 h-3 bg-white rounded-full shadow-sm"></div></div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="w-full mt-3 text-center text-xs text-green-600 font-bold uppercase">Entregado</div>
+
                                         </div>
                                     </div>
                                 </div>
