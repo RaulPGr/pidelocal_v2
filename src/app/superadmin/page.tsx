@@ -116,7 +116,7 @@ export default async function SuperAdminPage() {
                                 {businesses.map((biz) => (
                                     <tr key={biz.id} className="hover:bg-slate-50/80 transition-colors group">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
+                                            <Link href={`/superadmin/business/${biz.id}`} className="flex items-center group/link">
                                                 <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden relative">
                                                     {biz.image_url ? (
                                                         <img src={biz.image_url} alt="" className="h-full w-full object-cover" />
@@ -127,11 +127,13 @@ export default async function SuperAdminPage() {
                                                     )}
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-slate-900">{biz.name}</div>
+                                                    <div className="text-sm font-medium text-slate-900 group-hover/link:text-emerald-600 transition-colors">
+                                                        {biz.name}
+                                                    </div>
                                                     <div className="text-xs text-slate-500">{biz.email}</div>
                                                     <div className="text-xs text-indigo-500/80 font-mono mt-0.5">{biz.slug}.pidelocal.es</div>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <PlanSelector

@@ -40,21 +40,36 @@ export async function getGlobalStats(): Promise<GlobalStats> {
     // We'll fetch all and filter in memory if dataset is small, or use a simpler approximation.
     // Given user request "profesional", fetching all IDs is fine for <1000 businesses.
 
-    // 3. Orders & Revenue (Global)
-    // We aggregate from 'orders' table.
-    const { data: orders } = await supabaseAdmin
+    // 3. Orders (Global)
+    const { count: totalOrders } = await supabaseAdmin
         .from("orders")
-        .select("total_cents")
-        .in("status", ["confirmed", "delivered", "ready", "preparing"]); // Valid paid/accepted orders
+        .select("*", { count: "exact", head: true })
+        .in("status", ["confirmed", "delivered", "ready", "preparing"]);
 
-    const totalOrders = orders?.length || 0;
-    const totalRevenueCents = orders?.reduce((acc, o) => acc + (o.total_cents || 0), 0) || 0;
+    // 4. Platform Revenue (Est)
+    // Fetch all business plans
+    const { data: allBiz } = await supabaseAdmin
+        .from("businesses")
+        .select("theme_config");
+
+    let platformRevenueCents = 0;
+
+    allBiz?.forEach((b: any) => {
+        let plan = "starter";
+        try {
+            const t = typeof b.theme_config === 'string' ? JSON.parse(b.theme_config) : b.theme_config;
+            plan = t?.subscription || "starter";
+        } catch { }
+
+        if (plan === "premium") platformRevenueCents += 2900; // 29.00€
+        else if (plan === "medium") platformRevenueCents += 1900; // 19.00€
+    });
 
     return {
         totalBusinesses: totalBusinesses || 0,
         activeSubscriptions: activeSubscriptions || 0,
-        totalOrders,
-        totalRevenueCents
+        totalOrders: totalOrders || 0,
+        totalRevenueCents: platformRevenueCents
     };
 }
 
