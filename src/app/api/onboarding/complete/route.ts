@@ -58,8 +58,8 @@ export async function POST(req: Request) {
 
         if (linkError) {
             console.error("Error linking user", linkError);
-            // Optional: rollback business creation? For now just error.
-            return NextResponse.json({ error: "Error al asignar permisos." }, { status: 500 });
+            // Return detailed error for debugging
+            return NextResponse.json({ error: "Error al asignar permisos: " + linkError.message + " | " + linkError.details }, { status: 500 });
         }
 
         return NextResponse.json({ ok: true, slug: business.slug });
