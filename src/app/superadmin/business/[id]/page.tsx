@@ -3,17 +3,7 @@ import MembersManager from "./MembersManager";
 
 // ... existing imports
 
-async function getBusinessDetails(id: string) {
-    // ... existing queries
-
-    // 5. Members
-    const members = await getBusinessMembers(id);
-
-    return {
-        // ... existing return
-        members
-    };
-}
+// function removed
 
 export const dynamic = "force-dynamic";
 
