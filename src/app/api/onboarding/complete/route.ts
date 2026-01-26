@@ -3,10 +3,11 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function POST(req: Request) {
     try {
-        const { userId, email, businessName, slug, plan } = await req.json();
+        const { userId, email, businessName, slug, plan, password } = await req.json();
 
-        if (!userId || !slug || !businessName) {
-            return NextResponse.json({ error: "Faltan datos requeridos" }, { status: 400 });
+        // Must have EITHER (userId + slug + businessName) OR (email + password + slug + businessName)
+        if (!slug || !businessName || !(userId || (email && password))) {
+            return NextResponse.json({ error: "Faltan datos requeridos (Email/Pass o UserID)" }, { status: 400 });
         }
 
         // 1. Verify slug uniqueness
