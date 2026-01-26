@@ -185,16 +185,16 @@ export default function SaasLanding() {
                                                 </div>
                                                 <div className="flex items-center gap-3 mb-3 relative z-10">
                                                     <div className="w-10 h-10 rounded-full bg-white text-emerald-600 flex items-center justify-center font-bold text-lg">
-                                                        M4
+                                                        <span className="text-sm">🚴</span>
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold">Mesa 4 (Terraza)</p>
-                                                        <p className="text-xs text-emerald-100">Juan P.</p>
+                                                        <p className="font-bold">Para Recoger #128</p>
+                                                        <p className="text-xs text-emerald-100">Carlos R. • 3 productos</p>
                                                     </div>
-                                                    <div className="ml-auto text-xl font-bold">45,50 €</div>
+                                                    <div className="ml-auto text-xl font-bold">28,90 €</div>
                                                 </div>
                                                 <div className="w-full bg-white text-emerald-700 py-2 rounded-lg font-bold text-center text-sm cursor-pointer shadow-sm relative z-10">
-                                                    Aceptar y Cocinar
+                                                    Aceptar Pedido
                                                 </div>
                                             </div>
 
