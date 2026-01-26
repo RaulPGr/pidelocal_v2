@@ -9,7 +9,7 @@ export function normalizeSubscriptionPlan(input: unknown): SubscriptionPlan {
 }
 
 export function subscriptionAllowsOrders(plan: SubscriptionPlan): boolean {
-  return plan === "premium";
+  return true; // We enforce limits in backend for Starter, but feature is enabled
 }
 
 export function subscriptionAllowsReservations(plan: SubscriptionPlan): boolean {

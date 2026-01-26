@@ -19,6 +19,7 @@ export type BusinessSummary = {
     created_at: string;
     revenue_30d_cents: number;
     orders_30d: number;
+    orders_current_month?: number;
     is_active: boolean; // Derived from subscription or specific column check
     image_url?: string;
 };
@@ -82,26 +83,56 @@ export async function getBusinessesList(): Promise<BusinessSummary[]> {
 
     if (error || !businesses) return [];
 
+    // 30 Days ago
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const dateStr = thirtyDaysAgo.toISOString();
 
-    // Fetch recent orders for ALL businesses in one go would be optimal, 
-    // but simpler to do separate queries or one big query group by.
-    // Let's do one big query for recent orders and aggregate in memory.
+    // Current Month Start
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+    // Fetch recent orders (since 30 days ago is arguably older than startOfMonth usually, but let's be safe)
+    // Actually, to get current month counts accurately, we should filter by whichever is older or just query both ranges or union.
+    // For simplicity, let's query orders created >= min(thirtyDaysAgo, startOfMonth).
+    const minDate = dateStr < startOfMonth ? dateStr : startOfMonth;
+
     const { data: recentOrders } = await supabaseAdmin
         .from("orders")
-        .select("business_id, total_cents")
-        .gte("created_at", dateStr)
-        .in("status", ["confirmed", "delivered", "ready", "preparing"]);
+        .select("business_id, total_cents, created_at")
+        .gte("created_at", minDate)
+        // We count ALL orders for usage limit (except cancelled), but for revenue we might only want confirmed?
+        // The limit logic in route.ts used `select('*', { count: 'exact' })`. It didn't filter by status?
+        // Checking route.ts: `if (!countErr && (count || 0) >= 30)` -> It counted ALL rows.
+        // But for revenue stats we filtered by status.
+        // Let's fetch all orders in range and process in memory.
+        .neq("status", "cancelled");
 
-    const statsMap = new Map<string, { rev: number; count: number }>();
+    const statsMap = new Map<string, { rev: number; count30d: number; countMonth: number }>();
 
     recentOrders?.forEach(o => {
         if (!o.business_id) return;
-        const curr = statsMap.get(o.business_id) || { rev: 0, count: 0 };
-        curr.rev += (o.total_cents || 0);
-        curr.count += 1;
+        const curr = statsMap.get(o.business_id) || { rev: 0, count30d: 0, countMonth: 0 };
+
+        const createdAt = o.created_at;
+        const isConfirmed = ["confirmed", "delivered", "ready", "preparing", "completed"].includes((o as any).status || ""); // revenue usually counts valid orders
+
+        // 30d Logic
+        if (createdAt >= dateStr) {
+            if (isConfirmed) curr.rev += (o.total_cents || 0);
+            // Count for 30d usually implies "active/successful" orders for analytics? 
+            // Or total volume? Let's stick to total volume minus cancelled for consistency or valid ones.
+            // Original code filtered status In ["confirmed"...]. So it only counted valid orders.
+            if (isConfirmed) curr.count30d += 1;
+        }
+
+        // Current Month Logic (for Limit)
+        // usage limit counts mostly everything not cancelled? or everything?
+        // route.ts: `.neq('status', 'cancelled')` -> So simple count.
+        if (createdAt >= startOfMonth) {
+            curr.countMonth += 1;
+        }
+
         statsMap.set(o.business_id, curr);
     });
 
@@ -113,7 +144,7 @@ export async function getBusinessesList(): Promise<BusinessSummary[]> {
             plan = t?.subscription || "starter";
         } catch { }
 
-        const s = statsMap.get(b.id) || { rev: 0, count: 0 };
+        const s = statsMap.get(b.id) || { rev: 0, count30d: 0, countMonth: 0 };
 
         return {
             id: b.id,
@@ -123,8 +154,9 @@ export async function getBusinessesList(): Promise<BusinessSummary[]> {
             subscription_plan: plan,
             created_at: b.created_at,
             revenue_30d_cents: s.rev,
-            orders_30d: s.count,
-            is_active: true, // Placeholder until we have a real 'active' column
+            orders_30d: s.count30d,
+            orders_current_month: s.countMonth, // NEW field
+            is_active: true,
             image_url: b.image_url
         };
     });

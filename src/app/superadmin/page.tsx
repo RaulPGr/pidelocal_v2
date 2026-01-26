@@ -107,8 +107,8 @@ export default async function SuperAdminPage() {
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Negocio</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Plan</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Uso Mes</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ventas (30d)</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Pedidos (30d)</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
@@ -141,11 +141,36 @@ export default async function SuperAdminPage() {
                                                 currentPlan={biz.subscription_plan}
                                             />
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                            {(() => {
+                                                const plan = (biz.subscription_plan || "").toLowerCase();
+                                                const isStarter = plan.includes('starter') || plan.includes('piloto');
+                                                const currentOptions = biz.orders_current_month || 0;
+
+                                                if (isStarter) {
+                                                    const limit = 30;
+                                                    const percent = Math.min(100, (currentOptions / limit) * 100);
+                                                    let color = "bg-emerald-500";
+                                                    if (currentOptions >= limit) color = "bg-red-500";
+                                                    else if (currentOptions >= 25) color = "bg-orange-500";
+
+                                                    return (
+                                                        <div className="flex flex-col gap-1 w-24">
+                                                            <div className="flex justify-between text-xs font-bold text-slate-700">
+                                                                <span>{currentOptions}</span>
+                                                                <span className="text-slate-400">/ {limit}</span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                                <div className={`h-full ${color}`} style={{ width: `${percent}%` }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return <span className="text-slate-400 text-xs">Ilimitado ({currentOptions})</span>;
+                                            })()}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
                                             {formatCurrency(biz.revenue_30d_cents)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                            {biz.orders_30d}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">

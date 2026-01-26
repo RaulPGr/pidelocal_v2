@@ -42,8 +42,7 @@ export default function AdminSidebar() {
             href: "/admin/orders",
             label: "Pedidos",
             icon: ClipboardList,
-            locked: !subscriptionAllowsOrders(plan) && !isSuper,
-            requiredPlan: "Premium"
+            locked: false,
         },
         {
             href: "/admin/reservations",
