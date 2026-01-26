@@ -100,7 +100,7 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
                     }
                 });
             },
-            { rootMargin: "-120px 0px -60% 0px" } // Trigger when section hits top part of screen (adjusted for 64px header + nav)
+            { rootMargin: "-150px 0px -60% 0px" } // Trigger when section hits top (adjusted for ~80px+ header)
         );
 
         sections.forEach((s) => {
@@ -140,7 +140,7 @@ export default function CategoryNav({ sections }: { sections: Section[] }) {
     }, [isOpen]);
 
     return (
-        <div className="sticky top-[64px] md:top-[72px] z-40 bg-white/95 backdrop-blur-xl border-y border-slate-200/50 shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-white/80">
+        <div className="sticky top-[70px] md:top-[84px] z-30 bg-white/95 backdrop-blur-xl border-y border-slate-200/50 shadow-sm transition-all duration-300 supports-[backdrop-filter]:bg-white/80">
             <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 gap-4 relative">
 
                 {/* Scrollable Categories container */}
