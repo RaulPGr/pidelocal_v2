@@ -4,16 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { recordPageVisit } from "@/app/actions/analytics";
-
-// ... imports
-
-// existing useEffects ...
-
-useEffect(() => {
-    if (cfg?.business?.id) {
-        recordPageVisit(cfg.business.id, window.location.pathname);
-    }
-}, [cfg?.business?.id]);
 import { useReservation } from "@/context/ReservationContext";
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, ArrowRight, Star, ChefHat, Utensils, Map as MapIcon, ExternalLink, ShieldCheck } from "lucide-react";
 
@@ -92,6 +82,12 @@ export default function TenantLanding() {
     const [loading, setLoading] = useState(true);
     const [highlightPromotion, setHighlightPromotion] = useState<PromotionRule | null>(null);
     const { openReservationModal } = useReservation();
+
+    useEffect(() => {
+        if (cfg?.business?.id) {
+            recordPageVisit(cfg.business.id, window.location.pathname);
+        }
+    }, [cfg?.business?.id]);
 
     useEffect(() => {
         (async () => {
