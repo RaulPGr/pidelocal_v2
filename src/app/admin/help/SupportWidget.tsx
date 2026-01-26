@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Send, X, AlertCircle, CheckCircle2, Loader2, ChevronLeft } from "lucide-react";
+import { MessageSquare, Send, X, AlertCircle, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { createSupportTicket, getTenantTickets, replyTenantTicket } from "@/app/actions/support";
 
 type Ticket = {
