@@ -1,7 +1,19 @@
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { ArrowLeft, Calendar, CreditCard, Eye, ShoppingBag, Users } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { getBusinessMembers } from "../../actions";
+import MembersManager from "./MembersManager";
+
+// ... existing imports
+
+async function getBusinessDetails(id: string) {
+    // ... existing queries
+
+    // 5. Members
+    const members = await getBusinessMembers(id);
+
+    return {
+        // ... existing return
+        members
+    };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -96,42 +108,52 @@ export default async function BusinessDetailsPage({ params }: { params: Promise<
                     <Card title="Reservas" value={stats.totalReservations} icon={Calendar} color="rose" />
                 </div>
 
-                {/* Main Content: Orders Preview */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-5 border-b border-slate-100">
-                        <h2 className="font-bold text-slate-800">Últimos Pedidos</h2>
+                {/* Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Orders (Takes 2/3) */}
+                    <div className="lg:col-span-2 space-y-8">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-slate-100">
+                                <h2 className="font-bold text-slate-800">Últimos Pedidos</h2>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-100">
+                                    <thead className="bg-slate-50/50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Fecha</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cliente</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Total</th>
+                                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {recentOrders.map((o: any) => (
+                                            <tr key={o.id}>
+                                                <td className="px-6 py-3 text-sm text-slate-500">
+                                                    {new Date(o.created_at).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-3 text-sm text-slate-900 font-medium">
+                                                    {o.customer_email}
+                                                </td>
+                                                <td className="px-6 py-3 text-sm text-slate-600">
+                                                    {formatCurrency(o.total_cents)}
+                                                </td>
+                                                <td className="px-6 py-3 text-right">
+                                                    <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                                                        {o.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-100">
-                            <thead className="bg-slate-50/50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Fecha</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Cliente</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Total</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {recentOrders.map((o: any) => (
-                                    <tr key={o.id}>
-                                        <td className="px-6 py-3 text-sm text-slate-500">
-                                            {new Date(o.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-3 text-sm text-slate-900 font-medium">
-                                            {o.customer_email}
-                                        </td>
-                                        <td className="px-6 py-3 text-sm text-slate-600">
-                                            {formatCurrency(o.total_cents)}
-                                        </td>
-                                        <td className="px-6 py-3 text-right">
-                                            <span className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
-                                                {o.status}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                    {/* Right Column: Members (Takes 1/3) */}
+                    <div className="space-y-8">
+                        <MembersManager businessId={biz.id} initialMembers={data.members || []} />
                     </div>
                 </div>
             </div>
