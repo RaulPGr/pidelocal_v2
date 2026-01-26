@@ -50,8 +50,12 @@ export async function POST(req: Request) {
         // 2.5 Verify User Exists in Auth
         const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (authCheckError || !authUser) {
+            const debugUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "MISSING";
+            const debugKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").substring(0, 10) + "...";
             console.error("User not found in Auth:", authCheckError);
-            return NextResponse.json({ error: "El usuario no se creó correctamente en el sistema de autenticación." }, { status: 500 });
+            return NextResponse.json({
+                error: `Error Auth (Server): ${authCheckError?.message}. DebugURL: ${debugUrl}, Key: ${debugKey}, ID: ${userId}`
+            }, { status: 500 });
         }
 
         // 3. Link User as Member (Owner)
