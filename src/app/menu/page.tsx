@@ -485,6 +485,14 @@ async function MenuContent({ searchParams }: PageProps) {
       {/* 2. Sticky Nav (Replaced) */}
       <CategoryNav sections={orderedSections} />
 
+      {/* FREEMIUM WATERMARK */}
+      {plan === 'starter' && (
+        <a href="https://pidelocal.es?utm_source=watermark" target="_blank" rel="noopener noreferrer" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 hover:bg-slate-900 backdrop-blur-md text-white text-[10px] font-bold px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 transition-all hover:scale-105 border border-white/20">
+          <span className="opacity-70">Powered by</span>
+          <span className="text-emerald-400">PideLocal</span>
+        </a>
+      )}
+
       {/* 3. Main Content */}
       <div id="menu-content" className="max-w-7xl mx-auto px-4 py-12 scroll-mt-24">
 

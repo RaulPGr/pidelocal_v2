@@ -60,6 +60,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // --- FREEMIUM LIMIT CHECK ---
+    const { getSubscriptionForSlug } = await import('@/lib/subscription-server');
+    const { plan } = await getSubscriptionForSlug(slugParam || "");
+
+    if (plan === 'starter') {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count, error: countErr } = await supabaseAdmin
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', (tenant as any)?.id)
+        .gte('created_at', startOfMonth);
+
+      if (!countErr && (count || 0) >= 30) {
+        return NextResponse.json(
+          { ok: false, message: 'Este restaurante ha alcanzado su límite mensual de pedidos gratuitos (30/mes). Contacta con el propietario.' },
+          { status: 402 }
+        );
+      }
+    }
+    // ----------------------------
+
     if (!body.customer?.name || !body.customer?.phone)
       return NextResponse.json(
         { ok: false, message: 'Faltan datos del cliente' },
