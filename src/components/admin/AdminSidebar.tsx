@@ -27,7 +27,7 @@ import { useState, useEffect } from "react";
 
 export default function AdminSidebar() {
     const pathname = usePathname();
-    const { plan, isSuper, isTrial, trialEndsAt } = useAdminAccess();
+    const { plan, isSuper, isTrial, trialEndsAt, businessName } = useAdminAccess();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const isStarter = plan === "starter";
@@ -75,15 +75,14 @@ export default function AdminSidebar() {
             )}>
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    {/* Header */}
                     <div className="p-6 border-b border-slate-100 flex-shrink-0">
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-500/20">
-                                P
+                            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-500/20 shrink-0">
+                                {businessName ? businessName.charAt(0).toUpperCase() : 'P'}
                             </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
-                                    PideLocal
+                            <div className="min-w-0">
+                                <h1 className="text-sm font-bold text-slate-900 tracking-tight leading-tight truncate" title={businessName || 'PideLocal'}>
+                                    {businessName || 'PideLocal'}
                                 </h1>
                                 <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">
                                     Manager

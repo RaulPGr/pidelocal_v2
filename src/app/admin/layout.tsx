@@ -18,6 +18,7 @@ type AdminAccessState = {
   isTrial?: boolean;
   trialEndsAt?: string;
   slug?: string;
+  businessName?: string;
 };
 
 async function getAdminAccess(): Promise<AdminAccessState> {
@@ -47,6 +48,7 @@ async function getAdminAccess(): Promise<AdminAccessState> {
   let isTrial = false;
   let trialEndsAt: string | undefined;
   let slug: string | undefined;
+  let businessName: string | undefined;
 
   try {
     const cookieStore = await cookies();
@@ -57,10 +59,11 @@ async function getAdminAccess(): Promise<AdminAccessState> {
       businessId = info.businessId;
       isTrial = !!info.isTrial;
       trialEndsAt = info.trialEndsAt;
+      businessName = info.businessName;
     }
   } catch { }
 
-  return { allowed, isSuper, plan, businessId, isTrial, trialEndsAt, slug };
+  return { allowed, isSuper, plan, businessId, isTrial, trialEndsAt, slug, businessName };
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -75,6 +78,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       isTrial={access.isTrial}
       trialEndsAt={access.trialEndsAt}
       slug={access.slug}
+      businessName={access.businessName}
     >
       <div className="flex min-h-screen bg-slate-50">
         <AdminSidebar />

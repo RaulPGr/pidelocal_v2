@@ -7,6 +7,7 @@ export type SubscriptionInfo = {
   plan: SubscriptionPlan;
   ordersEnabled: boolean;
   businessId?: string;
+  businessName?: string;
   isTrial?: boolean;
   trialEndsAt?: string;
   subscriptionStatus?: string;
@@ -19,7 +20,7 @@ export async function getSubscriptionForSlug(slug: string): Promise<Subscription
   try {
     const { data, error } = await supabaseAdmin
       .from("businesses")
-      .select("id, theme_config, social")
+      .select("id, name, theme_config, social")
       .eq("slug", safeSlug)
       .maybeSingle();
 
@@ -59,6 +60,7 @@ export async function getSubscriptionForSlug(slug: string): Promise<Subscription
       plan,
       ordersEnabled,
       businessId: (data as any)?.id,
+      businessName: (data as any)?.name,
       isTrial,
       trialEndsAt: trialEnds,
       subscriptionStatus: status

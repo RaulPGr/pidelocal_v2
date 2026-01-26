@@ -9,6 +9,7 @@ type AdminAccess = {
   isTrial?: boolean;
   trialEndsAt?: string;
   slug?: string;
+  businessName?: string;
 };
 
 const AdminAccessContext = createContext<AdminAccess>({
@@ -19,8 +20,8 @@ const AdminAccessContext = createContext<AdminAccess>({
 type Props = AdminAccess & { children: React.ReactNode };
 
 // Contexto que expone el plan contratado y si el usuario es superadmin.
-export function AdminAccessProvider({ plan, isSuper, isTrial, trialEndsAt, slug, children }: Props) {
-  const value = useMemo(() => ({ plan, isSuper, isTrial, trialEndsAt, slug }), [plan, isSuper, isTrial, trialEndsAt, slug]);
+export function AdminAccessProvider({ plan, isSuper, isTrial, trialEndsAt, slug, businessName, children }: Props) {
+  const value = useMemo(() => ({ plan, isSuper, isTrial, trialEndsAt, slug, businessName }), [plan, isSuper, isTrial, trialEndsAt, slug, businessName]);
   return <AdminAccessContext.Provider value={value}>{children}</AdminAccessContext.Provider>;
 }
 
