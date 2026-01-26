@@ -52,16 +52,30 @@ export async function POST(req: Request) {
         const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
 
         if (authCheckError || !authUser) {
-            // DIAGNOSTIC: List last 3 users to see who IS in the db
-            const { data: { users: allUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 3 });
-            const userSummary = allUsers?.map(u => `${u.email} (${u.id})`).join(", ");
+            // DIAGNOSTIC 2: Decode JWT to check Project Reference
+            const authHeader = req.headers.get("authorization") || "";
+            let tokenRef = "no-token";
+            try {
+                const token = authHeader.replace("Bearer ", "");
+                const parts = token.split(".");
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    tokenRef = payload.ref || "missing-ref";
+                }
+            } catch (e) { tokenRef = "parse-error"; }
 
-            const debugUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "MISSING";
-            const debugKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").substring(0, 10) + "...";
+            const serverRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.split(".")[0]?.replace("https://", "") || "unknown";
+
+            // List LAST 50 users to ensure we aren't missing it due to pagination
+            const { data: { users: allUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 50 });
+            // Sort by created_at descending to show newest first
+            allUsers?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            const userSummary = allUsers?.slice(0, 5).map(u => `${u.email} (${u.created_at})`).join(", ");
 
             console.error("User not found.", authCheckError);
             return NextResponse.json({
-                error: `Error Auth (Server): User NOT found. DB says users are: [${userSummary || "None"}]. ListErr: ${listError?.message}. URL: ${debugUrl}, ID looked for: ${userId}`
+                error: `Error Auth: User missing. SPLIT BRAIN CHECK -> Client Token Ref: [${tokenRef}] vs Server Ref: [${serverRef}]. Newest DB Users: [${userSummary || "None"}]. ID: ${userId}`
             }, { status: 500 });
         }
 
