@@ -162,6 +162,7 @@ export async function updateBusinessPlan(businessId: string, newPlan: string) {
 
         revalidatePath('/superadmin');
         return { success: true };
+    } catch (e) {
         console.error("Error updating plan:", e);
         return { success: false, error: 'Failed to update plan' };
     }
