@@ -7,9 +7,9 @@ import { loadStripe } from '@stripe/stripe-js';
 
 // We assume we have the key, or we fetch URL from API
 const PLANS = [
-    { id: "starter", name: "Starter", price: "19,90€", features: ["Carta QR", "Web"] },
-    { id: "medium", name: "Medium", price: "39,90€", features: ["Reservas", "Planos"] },
-    { id: "premium", name: "Premium", price: "69,90€", features: ["Pedidos", "Fidelización"] },
+    { id: "starter", name: "Starter", price: "0€", features: ["Carta QR", "Web", "Max. 30 pedidos"] },
+    { id: "medium", name: "Medium", price: "29,90€", features: ["Pedidos Ilimitados", "Reservas", "Sin marca de agua"] },
+    { id: "premium", name: "Premium", price: "49,90€", features: ["Todo lo de Medium", "Pagos Online", "Marketing", "Fidelización"] },
 ];
 
 export default function BillingPage() {
