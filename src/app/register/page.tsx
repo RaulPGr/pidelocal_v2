@@ -43,24 +43,13 @@ export default function RegisterPage() {
         setError(null);
 
         try {
-            // 1. Supabase Auth Signup
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-                email,
-                password,
-            });
-
-            if (authError) throw authError;
-            if (!authData.user) throw new Error("No se pudo crear el usuario.");
-
-            const userId = authData.user.id;
-
-            // 2. Provision Business Tenant via API
+            // New Flow: Server-Side Registration
             const res = await fetch("/api/onboarding/complete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId,
                     email,
+                    password, // Send password securely to API
                     businessName,
                     slug,
                     plan: initialPlan
@@ -70,26 +59,10 @@ export default function RegisterPage() {
             const j = await res.json();
             if (!res.ok) throw new Error(j.error || "Error al configurar el restaurante.");
 
-            // 3. Success & Redirect
-            // Construct the new URL. In dev (localhost), we assume subdomains work or we use port based?
-            // For now, let's try the standard subdomain redirection logic.
-            // If localhost, it might tricky if not mapped in hosts.
-            const host = window.location.host; // localhost:3000
-            const protocol = window.location.protocol; // http:
-
-            // Check if we are on a domain that supports wildcards
-            // For localhost, we usually need 'slug.localhost' or manual 'lvh.me'
-            // Let's assume production 'pidelocal.com' -> 'slug.pidelocal.com'
-            // And localhost -> 'slug.localhost' (Chrome supports this).
-
-            let newUrl = `${protocol}//${slug}.${host.replace('www.', '')}/admin`;
-            if (host.includes("localhost")) {
-                // On windows, slug.localhost sometimes fails without manual helper.
-                // We can fallback to ?tenant=slug method for safety during dev.
-                newUrl = `/admin?tenant=${slug}`;
-            }
-
-            window.location.href = newUrl;
+            // Success!
+            // Since we created the user on server, we are not logged in locally.
+            // We redirect to login page with a success message.
+            router.push(`/login?registered=true&email=${encodeURIComponent(email)}`);
 
         } catch (e: any) {
             console.error(e);
