@@ -411,7 +411,7 @@ export default function HelpClient({ businessId }: { businessId: string }) {
                         <p className="text-sm text-emerald-700/80 mb-4">
                             Si no encuentras lo que buscas, contacta con nuestro soporte técnico.
                         </p>
-                        <button className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors text-sm">
+                        <button onClick={() => setShowSupport(true)} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors text-sm">
                             Contactar Soporte
                         </button>
                     </div>

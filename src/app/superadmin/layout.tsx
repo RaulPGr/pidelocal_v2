@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminEmails } from "@/utils/plan";
@@ -55,7 +56,9 @@ export default async function SuperAdminLayout({ children }: { children: React.R
                             <span className="px-2 py-1 bg-white/10 rounded text-xs font-mono text-slate-300">SUPERADMIN</span>
                         </div>
                         <div className="flex items-center gap-4">
-                            <a href="/" className="text-sm font-medium hover:text-emerald-400 text-slate-300 transition-colors">Ir a Home</a>
+                            <Link href="/superadmin" className="text-sm font-medium hover:text-emerald-400 text-slate-300 transition-colors">Dashboard</Link>
+                            <Link href="/superadmin/support" className="text-sm font-medium hover:text-emerald-400 text-slate-300 transition-colors">Soporte</Link>
+                            <Link href="/" className="text-sm font-medium hover:text-emerald-400 text-slate-300 transition-colors">Ir a Home</Link>
                         </div>
                     </div>
                 </div>
