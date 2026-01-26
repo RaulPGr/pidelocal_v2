@@ -61,7 +61,7 @@ export async function getBusinessesList(): Promise<BusinessSummary[]> {
     // Fetch businesses
     const { data: businesses, error } = await supabaseAdmin
         .from("businesses")
-        .select("id, name, slug, email, theme_config, created_at, image_url")
+        .select("*")
         .order("created_at", { ascending: false });
 
     if (error || !businesses) return [];
