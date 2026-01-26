@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { recordPageVisit } from "@/app/actions/analytics";
+import { isPromotionActive, type Promotion as PromotionRule } from "@/lib/promotions";
 import { useReservation } from "@/context/ReservationContext";
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, ArrowRight, Star, ChefHat, Utensils, Map as MapIcon, ExternalLink, ShieldCheck } from "lucide-react";
 
