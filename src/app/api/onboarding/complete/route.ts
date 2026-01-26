@@ -47,23 +47,11 @@ export async function POST(req: Request) {
             }, { status: 500 });
         }
 
-        // 2.5 Ensure User Exists in public.users (mirrored from auth)
-        const { error: upsertError } = await supabaseAdmin
-            .from("users")
-            .upsert({
-                id: userId,
-                email: email,
-                full_name: businessName,
-                created_at: new Date().toISOString()
-            }, { onConflict: 'id' })
-            .select()
-            .single();
-
-        if (upsertError) {
-            console.error("Error syncing user to public table", upsertError);
-            return NextResponse.json({
-                error: "Error interno (Sync Usuario): " + upsertError.message + (upsertError.details ? " | " + upsertError.details : "")
-            }, { status: 500 });
+        // 2.5 Verify User Exists in Auth (Debug step)
+        const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (authCheckError || !authUser) {
+            console.error("User not found in Auth:", authCheckError);
+            return NextResponse.json({ error: "El usuario no se creó correctamente en el sistema de autenticación." }, { status: 500 });
         }
 
         // 3. Link User as Member (Owner)
