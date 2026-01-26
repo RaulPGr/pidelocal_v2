@@ -51,7 +51,9 @@ export async function POST(req: Request) {
         const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (authCheckError || !authUser) {
             console.error("User not found in Auth:", authCheckError);
-            return NextResponse.json({ error: "El usuario no se creó correctamente en el sistema de autenticación." }, { status: 500 });
+            return NextResponse.json({
+                error: "Error Auth Check: " + (authCheckError?.message || "User is null") + " | ID: " + userId
+            }, { status: 500 });
         }
 
         // 3. Link User as Member (Owner)
