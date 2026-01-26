@@ -119,7 +119,7 @@ export default function SaasLanding() {
                             plan="Premium"
                             price="49,90"
                             desc="La potencia total"
-                            features={["Todo lo de Medium", "Pagos Online (Stripe)", "Marketing Automático", "Soporte Prioritario", "Multi-idioma"]}
+                            features={["Todo lo de Medium", "Pagos Online (Stripe)", "Marketing Automático", "Soporte Prioritario", "Estadísticas Avanzadas"]}
                         />
                     </div>
                 </div>
