@@ -192,33 +192,42 @@ export default async function SuperAdminPage() {
                                         </td>
                                     </tr>
                                 ))}
-                            </div>
-                    </div >
-                    );
+                            </tbody>
+                        </table>
+                    </div>
+                    {businesses.length === 0 && (
+                        <div className="p-12 text-center text-slate-500">
+                            No hay negocios registrados.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 }
 
-                    function StatCard({title, value, icon: Icon, trend, color }: any) {
+function StatCard({ title, value, icon: Icon, trend, color }: any) {
     const colors: any = {
-                        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
-                    blue: "text-blue-600 bg-blue-50 border-blue-100",
-                    violet: "text-violet-600 bg-violet-50 border-violet-100",
-                    amber: "text-amber-600 bg-amber-50 border-amber-100",
+        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        blue: "text-blue-600 bg-blue-50 border-blue-100",
+        violet: "text-violet-600 bg-violet-50 border-violet-100",
+        amber: "text-amber-600 bg-amber-50 border-amber-100",
     };
-                    const c = colors[color] || colors.blue;
+    const c = colors[color] || colors.blue;
 
-                    return (
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={`p-2.5 rounded-lg ${c}`}>
-                                <Icon className="w-5 h-5" />
-                            </div>
-                            {/* <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.5%</span> */}
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-                            <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-                            <p className="text-xs text-slate-400 mt-2">{trend}</p>
-                        </div>
-                    </div>
-                    );
+    return (
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+                <div className={`p-2.5 rounded-lg ${c}`}>
+                    <Icon className="w-5 h-5" />
+                </div>
+                {/* <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.5%</span> */}
+            </div>
+            <div>
+                <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
+                <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+                <p className="text-xs text-slate-400 mt-2">{trend}</p>
+            </div>
+        </div>
+    );
 }
