@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addBusinessMember, removeBusinessMember, type BusinessMember } from "../actions";
+import { addBusinessMember, removeBusinessMember, type BusinessMember } from "../../actions";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, User, Shield } from "lucide-react";
 
