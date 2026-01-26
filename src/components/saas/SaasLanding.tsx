@@ -99,27 +99,27 @@ export default function SaasLanding() {
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         {/* STARTER */}
                         <PricingCard
-                            plan="Starter"
-                            price="19,90"
-                            desc="Para empezar a digitalizarte"
-                            features={["Carta Digital QR", "Tu Web Personalizada", "Panel de Control Básico", "Soporte por Email"]}
+                            plan="Starter (Piloto)"
+                            price="0"
+                            desc="Para validar tu idea sin coste"
+                            features={["Carta Digital QR", "Tu Web Personalizada", "Max. 30 pedidos/mes", "Marca de agua PideLocal"]}
                         />
 
                         {/* MEDIUM */}
                         <PricingCard
                             plan="Medium"
-                            price="39,90"
-                            desc="Para restaurantes con sala"
+                            price="29,90"
+                            desc="Para negocios que arrancan"
                             highlight
-                            features={["Todo lo de Starter", "Gestión de Reservas", "Plano de Mesas", "Recordatorios WhatsApp (Opcional)"]}
+                            features={["Todo lo de Starter", "Pedidos Ilimitados", "Sin marca de agua", "Gestión de Reservas"]}
                         />
 
                         {/* PREMIUM */}
                         <PricingCard
                             plan="Premium"
-                            price="69,90"
+                            price="49,90"
                             desc="La potencia total"
-                            features={["Todo lo de Medium", "Pedidos Online (Delivery)", "Pagos Integrados (Stripe)", "Marketing & Fidelización", "Soporte Prioritario"]}
+                            features={["Todo lo de Medium", "Pagos Online (Stripe)", "Marketing Automático", "Soporte Prioritario", "Multi-idioma"]}
                         />
                     </div>
                 </div>
