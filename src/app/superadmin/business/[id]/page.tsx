@@ -46,6 +46,9 @@ async function getBusinessDetails(id: string) {
         .select("*", { count: "exact", head: true })
         .eq("business_id", id);
 
+    // 5. Members
+    const members = await getBusinessMembers(id);
+
     return {
         biz,
         stats: {
@@ -55,7 +58,8 @@ async function getBusinessDetails(id: string) {
             totalReservations: totalReservations || 0,
             totalVisits: totalVisits || 0
         },
-        recentOrders: orders?.slice(0, 10) || []
+        recentOrders: orders?.slice(0, 10) || [],
+        members
     };
 }
 
