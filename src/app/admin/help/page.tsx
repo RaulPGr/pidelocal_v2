@@ -13,7 +13,7 @@ export default async function HelpPage() {
         const slug = c.get("x-tenant-slug")?.value;
         if (slug) {
             const sub = await getSubscriptionForSlug(slug);
-            businessId = sub.businessId;
+            businessId = sub.businessId || "";
         }
     } catch { }
 
