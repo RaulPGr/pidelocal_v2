@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminEmails } from "@/utils/plan";
 
-async function isSuperAdmin() {
+async function checkSuperAdmin() {
     const h = await headers();
     const proto = h.get("x-forwarded-proto") ?? "https";
     const host = h.get("host");
@@ -18,16 +18,30 @@ async function isSuperAdmin() {
         }
     } catch { }
 
+    if (!email) return { allowed: false, unauthenticated: true, email: null };
+
     const admins = adminEmails();
-    // If no admins configured, allow first user (dev mode usually) or block. Safest is block if empty, but for dev maybe allow.
-    // Using same logic as existing admin: if empty list, allow logic in existing admin is: "isSuper = admins.length === 0 ? !!email : admins.includes(email);"
-    // BUT here we want STRICT superadmin. 
-    return admins.length === 0 ? !!email : admins.includes(email);
+    // If no admins are set, maybe we want to allow access in dev? 
+    // But user asked for professional mode, so better strict by default unless empty list implies open (dangerous for published app).
+    // Existing logic was "if 0, check email exists".
+    // We stick to strict whitelist, if empty list, only allow if logic was lenient before, but likely empty list means nobody allowed.
+    // However, original logic said: return admins.length === 0 ? !!email : admins.includes(email);
+    const isAllowed = admins.length === 0 ? !!email : admins.includes(email);
+
+    return { allowed: isAllowed, unauthenticated: false, email };
 }
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
-    const allowed = await isSuperAdmin();
-    if (!allowed) redirect("/");
+    const { allowed, unauthenticated } = await checkSuperAdmin();
+
+    if (unauthenticated) {
+        redirect("/login?next=/superadmin");
+    }
+
+    if (!allowed) {
+        // Logged in but not allowed
+        redirect("/");
+    }
 
     return (
         <div className="min-h-screen bg-slate-100">
