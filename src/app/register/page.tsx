@@ -189,6 +189,9 @@ export default function RegisterPage() {
                         <p className="text-center text-xs text-slate-400">
                             Al registrarte aceptas nuestros términos y condiciones.
                         </p>
+                        <p className="text-center text-[10px] text-slate-300 font-mono break-all">
+                            Debug: {process.env.NEXT_PUBLIC_SUPABASE_URL}
+                        </p>
                     </form>
 
                     <div className="text-center">
