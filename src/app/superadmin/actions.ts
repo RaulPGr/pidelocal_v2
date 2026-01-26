@@ -371,11 +371,39 @@ export async function adminReplyTicket(ticketId: string, message: string) {
 }
 
 export async function closeTicket(ticketId: string) {
-    await supabaseAdmin
-        .from("support_tickets")
-        .update({ status: 'closed' })
-        .eq("id", ticketId);
+    try {
+        await supabaseAdmin
+            .from("support_tickets")
+            .update({ status: 'closed' })
+            .eq("id", ticketId);
 
-    revalidatePath(`/superadmin/support`);
-    return { success: true };
+        revalidatePath(`/superadmin/support`);
+        return { success: true };
+    } catch (e: any) {
+        return { success: false, error: e.message };
+    }
+}
+
+// --- DELETE BUSINESS (SUPERADMIN) ---
+
+export async function deleteBusiness(businessId: string) {
+    try {
+        console.log("Deleting business:", businessId);
+
+        // 1. Delete Business (Foreign keys used to cascade: members, products, orders, etc.)
+
+        // We use supabaseAdmin (Service Role) to bypass RLS
+        const { error } = await supabaseAdmin
+            .from("businesses")
+            .delete()
+            .eq("id", businessId);
+
+        if (error) throw error;
+
+        revalidatePath('/superadmin');
+        return { success: true };
+    } catch (e: any) {
+        console.error("Delete business error:", e);
+        return { success: false, error: e.message || "Error al eliminar el negocio." };
+    }
 }

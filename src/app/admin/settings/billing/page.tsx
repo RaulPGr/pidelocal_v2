@@ -4,6 +4,7 @@ import { useAdminAccess } from "@/context/AdminAccessContext";
 import { Check, CreditCard, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { loadStripe } from '@stripe/stripe-js';
+import { cancelAccount } from "./actions";
 
 // We assume we have the key, or we fetch URL from API
 const PLANS = [
@@ -105,13 +106,50 @@ export default function BillingPage() {
                 })}
             </div>
 
-            {/* Invoice History Placeholder */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-                <div className="p-6 border-b border-slate-100">
-                    <h3 className="font-bold text-slate-900">Historial de Facturas</h3>
+            <div className="p-12 text-center text-slate-400">
+                No hay facturas disponibles todavía.
+            </div>
+
+            {/* DANGER ZONE */}
+            <div className="border border-rose-200 rounded-2xl overflow-hidden bg-rose-50/30">
+                <div className="p-6 border-b border-rose-100 flex items-center gap-3">
+                    <div className="p-2 bg-rose-100 rounded-lg text-rose-600">
+                        <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-rose-900">Zona de Peligro</h3>
+                        <p className="text-sm text-rose-700">Acciones destructivas e irreversibles.</p>
+                    </div>
                 </div>
-                <div className="p-12 text-center text-slate-400">
-                    No hay facturas disponibles todavía.
+                <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h4 className="font-bold text-slate-800">Darse de baja</h4>
+                        <p className="text-sm text-slate-500 max-w-xl">
+                            Si cancelas tu cuenta, perderás acceso a todos tus datos, configuraciones, carta y clientes.
+                            Esta acción no se puede deshacer.
+                        </p>
+                    </div>
+                    <button
+                        onClick={async () => {
+                            if (confirm("⚠ ATENCIÓN: Esta acción es irreversible.\n\n¿Estás SEGURO de que quieres eliminar tu cuenta y todos tus datos (ventas, carta, clientes)?")) {
+                                if (confirm("Última advertencia.\n\nAl pulsar Aceptar, tu sesión se cerrará y los datos se borrarán permanentemente.")) {
+                                    setLoading("deleting");
+                                    try {
+                                        const res = await cancelAccount();
+                                        if (!res.success) alert("Error: " + res.error);
+                                    } catch (e) {
+                                        alert("Error al procesar la baja.");
+                                    } finally {
+                                        setLoading(null);
+                                    }
+                                }
+                            }
+                        }}
+                        disabled={loading === "deleting"}
+                        className="px-6 py-2 bg-white border-2 border-rose-100 text-rose-600 font-bold rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                    >
+                        {loading === "deleting" ? "Eliminando..." : "Eliminar Cuenta"}
+                    </button>
                 </div>
             </div>
         </div>

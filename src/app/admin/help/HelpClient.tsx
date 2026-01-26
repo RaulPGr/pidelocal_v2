@@ -336,6 +336,10 @@ export default function HelpClient({ businessId }: { businessId: string }) {
         {
             q: "¿Cómo configuro los gastos de envío?",
             a: "Desde 'Configuración > Pedidos' puedes activar el reparto propio, establecer un pedido mínimo y fijar un coste de envío que se sumará automáticamente al ticket."
+        },
+        {
+            q: "¿Cómo puedo darme de baja?",
+            a: "Puedes cancelar tu cuenta en cualquier momento desde 'Configuración > Facturación'. Al final de la página encontrarás la 'Zona de Peligro' para eliminar tu cuenta y todos tus datos permanentemente. No hay permanencia."
         }
     ];
 

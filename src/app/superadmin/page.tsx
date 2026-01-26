@@ -12,6 +12,7 @@ import {
     Store
 } from "lucide-react";
 import Link from "next/link";
+import DeleteBusinessButton from "./DeleteBusinessButton";
 
 export const dynamic = "force-dynamic";
 
@@ -182,54 +183,42 @@ export default async function SuperAdminPage() {
                                                 >
                                                     <ExternalLink className="w-4 h-4" />
                                                 </a>
-                                                <a
-                                                    href={`/admin/settings?tenant=${biz.slug}`}
-                                                    className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2"
-                                                    title="Acceder como Admin"
-                                                >
-                                                    <Settings className="w-4 h-4" />
-                                                    <span className="hidden lg:inline text-xs font-bold">Gestionar</span>
-                                                </a>
+                                                <span className="hidden lg:inline text-xs font-bold">Gestionar</span>
+                                                <DeleteBusinessButton
+                                                    businessId={biz.id}
+                                                    businessName={biz.name}
+                                                />
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    {businesses.length === 0 && (
-                        <div className="p-12 text-center text-slate-500">
-                            No hay negocios registrados.
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+                            </div>
+                    </div >
+                    );
 }
 
-function StatCard({ title, value, icon: Icon, trend, color }: any) {
+                    function StatCard({title, value, icon: Icon, trend, color }: any) {
     const colors: any = {
-        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
-        blue: "text-blue-600 bg-blue-50 border-blue-100",
-        violet: "text-violet-600 bg-violet-50 border-violet-100",
-        amber: "text-amber-600 bg-amber-50 border-amber-100",
+                        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+                    blue: "text-blue-600 bg-blue-50 border-blue-100",
+                    violet: "text-violet-600 bg-violet-50 border-violet-100",
+                    amber: "text-amber-600 bg-amber-50 border-amber-100",
     };
-    const c = colors[color] || colors.blue;
+                    const c = colors[color] || colors.blue;
 
-    return (
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-                <div className={`p-2.5 rounded-lg ${c}`}>
-                    <Icon className="w-5 h-5" />
-                </div>
-                {/* <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.5%</span> */}
-            </div>
-            <div>
-                <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-                <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-                <p className="text-xs text-slate-400 mt-2">{trend}</p>
-            </div>
-        </div>
-    );
+                    return (
+                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className={`p-2.5 rounded-lg ${c}`}>
+                                <Icon className="w-5 h-5" />
+                            </div>
+                            {/* <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+4.5%</span> */}
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
+                            <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
+                            <p className="text-xs text-slate-400 mt-2">{trend}</p>
+                        </div>
+                    </div>
+                    );
 }
