@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const allowOrders = subscriptionAllowsOrders(plan) || isSuper;
   const allowReservations = subscriptionAllowsReservations(plan) || isSuper;
 
-  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "payments">("business");
+  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "payments" | "theme">("business");
 
   const tabs = [
     { id: "business", label: "Negocio", icon: Store, show: true },
