@@ -19,8 +19,8 @@ const INFO_DEFAULT = {
     email: "info@mirestaurante.com",
     whatsapp: "+34600000000",
     direccion: "Calle Mayor 123, 30001 Murcia, España",
-    logoUrl: "/images/fachada.png",
-    fachadaUrl: "/images/fachada.png",
+    logoUrl: "/images/pidelocal.png",
+    fachadaUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop",
     menuPath: "/menu",
 };
 const COORDS_DEFAULT = { lat: 37.9861, lng: -1.1303, zoom: 16 };
