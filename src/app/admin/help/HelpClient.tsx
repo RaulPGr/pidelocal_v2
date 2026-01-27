@@ -54,7 +54,7 @@ export default function HelpClient({ businessId }: { businessId: string }) {
                 },
                 {
                     title: "Personalizar Datos del Negocio",
-                    content: "En Configuración > Empresa puedes cambiar el nombre visible de tu restaurante, el teléfono de contacto y la descripción corta que aparece en Google. Asegúrate de que la dirección sea correcta para que los clientes sepan dónde recoger."
+                    content: "En Configuración > Negocio puedes cambiar el nombre visible de tu restaurante, el teléfono de contacto y la descripción corta que aparece en Google. Asegúrate de que la dirección sea correcta para que los clientes sepan dónde recoger."
                 },
                 {
                     title: "Vincular cuenta de STRIPE (Pagos)",
@@ -80,12 +80,16 @@ export default function HelpClient({ businessId }: { businessId: string }) {
                             <p>Haz que tu marca destaque.</p>
                             <ol className="list-decimal pl-5 space-y-2 text-slate-700">
                                 <li>Ve a <strong>Configuración &gt; Tema</strong>.</li>
-                                <li>En <strong>"Color Corporativo"</strong>, elige tu color principal. El sistema ajustará automáticamente los botones y degradados para que queden elegantes.</li>
-                                <li>Si quieres más control, despliega "Ajustes Avanzados" para cambiar colores de texto o fondo.</li>
-                                <li>También puedes subir tu logo en Configuración &gt; Empresa &gt; Imágenes.</li>
+                                <li>En <strong>"Color Corporativo"</strong>, elige tu color principal. El sistema ajustará automáticamente los botones y degradados para que queden elegantes (Varita Mágica).</li>
+                                <li>Si quieres más control, despliega "Ajustes Avanzados" para cambiar colores de texto o fondo manualmente.</li>
+                                <li>El logotipo y la imagen de portada se suben en <strong>Configuración &gt; Negocio</strong>.</li>
                             </ol>
                         </div>
                     )
+                },
+                {
+                    title: "Gestionar Equipo y Permisos",
+                    content: "Desde la nueva pestaña Configuración > Equipo puedes invitar a otros empleados (Managers o Staff) para que te ayuden a gestionar los pedidos, sin darles acceso total a todo el negocio."
                 }
             ]
         },
@@ -353,7 +357,7 @@ export default function HelpClient({ businessId }: { businessId: string }) {
         },
         {
             q: "¿Cómo cambio la ubicación del mapa en mi web?",
-            a: "Desde 'Configuración > Contacto y Ubicación' puedes pegar el enlace de Google Maps. Busca tu negocio en Google Maps, dale a 'Compartir', elige 'Insertar un mapa' y copia el 'HTML'. Pégalo en el campo 'Google Maps (URL Embed)' y aparecerá automáticamente."
+            a: "Desde 'Configuración > Negocio' (sección Contacto y Ubicación) puedes pegar el enlace de Google Maps. Busca tu negocio en Google Maps, dale a 'Compartir', elige 'Insertar un mapa' y copia el 'HTML'. Pégalo en el campo 'Google Maps (URL Embed)' y aparecerá automáticamente."
         }
     ];
 
