@@ -9,7 +9,8 @@ export async function GET(req: NextRequest) {
     const error = url.searchParams.get("error");
 
     // Fallback redirect if we can't parse state (shouldn't happen often)
-    const rootRedirect = `${process.env.NEXT_PUBLIC_SITE_URL || "https://pidelocal.es"}/admin/settings/orders`;
+    // FIX: Ensure this always points to a valid URL even if env var is weird
+    const rootRedirect = "https://pidelocal.es/admin/settings/orders";
 
     if (error) {
         return NextResponse.redirect(`${rootRedirect}?error=${error}`);
@@ -27,14 +28,12 @@ export async function GET(req: NextRequest) {
     let finalRedirectBase = rootRedirect;
     if (tenantSlug) {
         // Reconstruct tenant URL: protocol + slug + root domain
-        // Assuming NEXT_PUBLIC_SITE_URL is something like "https://pidelocal.es"
+        // Assuming prod is always pidelocal.es
         // We want "https://slug.pidelocal.es/admin/settings/orders"
-        const rootUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://pidelocal.es");
-        const protocol = rootUrl.protocol; // "https:"
-        const host = rootUrl.host; // "pidelocal.es" (without port if 80/443, with if local)
+        const host = "pidelocal.es";
 
         // If localhost, logic might differ, but for prod:
-        finalRedirectBase = `${protocol}//${tenantSlug}.${host}/admin/settings/orders`;
+        finalRedirectBase = `https://${tenantSlug}.${host}/admin/settings/orders`;
     }
 
     try {

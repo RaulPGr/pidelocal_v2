@@ -16,7 +16,9 @@ export async function GET(req: NextRequest) {
 
         // 2. Generate Account Link (Standard/Express)
         // We use the root domain for the callback to match Stripe whitelist
-        const rootDomain = process.env.NEXT_PUBLIC_SITE_URL || "https://pidelocal.es";
+        // FIX: NEXT_PUBLIC_SITE_URL might be set to a subdomain in some envs. 
+        // We enforce the production root domain for the callback.
+        const rootDomain = "https://pidelocal.es";
 
         // State to verify callback security AND know where to return
         // Format: tenant:id:slug
