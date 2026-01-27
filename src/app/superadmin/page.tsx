@@ -176,7 +176,7 @@ export default async function SuperAdminPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <a
-                                                    href={`/?tenant=${biz.slug}`}
+                                                    href={process.env.NODE_ENV === "development" ? `/?tenant=${biz.slug}` : `https://${biz.slug}.pidelocal.es`}
                                                     target="_blank"
                                                     className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                                                     title="Ver Web Pública"
