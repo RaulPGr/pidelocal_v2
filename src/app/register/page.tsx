@@ -60,9 +60,9 @@ export default function RegisterPage() {
             if (!res.ok) throw new Error(j.error || "Error al configurar el restaurante.");
 
             // Success!
-            // Since we created the user on server, we are not logged in locally.
-            // We redirect to login page with a success message.
-            router.push(`/login?registered=true&email=${encodeURIComponent(email)}`);
+            // We redirect to login page with a success message AND the tenant context
+            // to ensure the middleware updates the cookie to the new business.
+            router.push(`/login?registered=true&email=${encodeURIComponent(email)}&tenant=${slug}`);
 
         } catch (e: any) {
             console.error(e);
