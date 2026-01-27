@@ -267,7 +267,14 @@ export async function PATCH(req: Request) {
       const currentMenu =
         currentTheme.menu && typeof currentTheme.menu === 'object' ? { ...currentTheme.menu } : {};
       const nextTheme = { ...currentTheme, menu: { ...currentMenu, layout } };
-      themeUpdates = nextTheme;
+      themeUpdates = { ...(themeUpdates || {}), ...nextTheme };
+    }
+    if (body.subscription !== undefined) {
+      const currentTheme =
+        (biz as any)?.theme_config && typeof (biz as any).theme_config === 'object'
+          ? { ...(biz as any).theme_config }
+          : {};
+      themeUpdates = { ...(themeUpdates || currentTheme), subscription: body.subscription };
     }
     if (socialUpdates) {
       updates.social = socialUpdates;

@@ -7,22 +7,27 @@ import ThemeSettingsClient from "@/app/admin/settings/theme/client";
 import SettingsClient from "./settingsClient";
 import { useAdminAccess } from "@/context/AdminAccessContext";
 import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/subscription";
-import { Store, Calendar, ShoppingBag, CreditCard, Clock, Palette } from "lucide-react";
+import { Store, Calendar, ShoppingBag, CreditCard, Clock, Palette, Users } from "lucide-react";
 import clsx from "clsx";
 import PushNotificationManager from "@/components/admin/PushNotificationManager";
+
+import TeamSettingsClient from "@/app/admin/settings/team/client";
 
 export default function SettingsPage() {
   const { plan, isSuper } = useAdminAccess();
   const allowOrders = subscriptionAllowsOrders(plan) || isSuper;
   const allowReservations = subscriptionAllowsReservations(plan) || isSuper;
 
-  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "payments" | "theme">("business");
+  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "payments" | "theme" | "team">("business");
 
   const tabs = [
     { id: "business", label: "Negocio", icon: Store, show: true },
     { id: "theme", label: "Tema", icon: Palette, show: true },
     { id: "orders", label: "Pedidos y Horarios", icon: ShoppingBag, show: allowOrders },
     { id: "payments", label: "Pagos", icon: CreditCard, show: allowOrders },
+    // "Team" tab visible to everyone or maybe restricted? Assuming purely internal management, so ok for now.
+    // Ideally restricted to owners/managers but let component handle it or show for all.
+    { id: "team", label: "Equipo", icon: Users, show: true },
   ];
 
   return (
@@ -73,7 +78,9 @@ export default function SettingsPage() {
           <ThemeSettingsClient />
         )}
 
-
+        {activeTab === "team" && (
+          <TeamSettingsClient />
+        )}
 
         {activeTab === "orders" && (
           <div className="space-y-8">

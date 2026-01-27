@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Clock, Save, Loader2, X, CreditCard } from 'lucide-react';
+import { Clock, Save, Loader2, X, CreditCard, Send } from 'lucide-react';
 import clsx from 'clsx';
 
 type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
@@ -17,6 +17,12 @@ export default function OrdersHoursSettingsClient() {
   const [delivery, setDelivery] = useState({ enabled: false, min: 0, fee: 0, pay_on_delivery_enabled: true, datafono_enabled: true });
   const [payments, setPayments] = useState({ cash: true, card: true });
   const [stripeConnectedId, setStripeConnectedId] = useState<string | null>(null);
+
+  // Telegram State
+  const [telegramEnabled, setTelegramEnabled] = useState(false);
+  const [telegramToken, setTelegramToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -64,6 +70,10 @@ export default function OrdersHoursSettingsClient() {
           if (jBus.data?.social?.stripe_account_id) {
             setStripeConnectedId(jBus.data.social.stripe_account_id);
           }
+          // Telegram
+          setTelegramEnabled(Boolean(jBus.data?.telegram_notifications_enabled));
+          setTelegramToken(jBus.data?.telegram_bot_token || "");
+          setTelegramChatId(jBus.data?.telegram_chat_id || "");
         }
 
         const jPay = await rPay.json();
@@ -95,7 +105,10 @@ export default function OrdersHoursSettingsClient() {
               delivery_fee: delivery.fee,
               delivery_pay_on_delivery_enabled: delivery.pay_on_delivery_enabled,
               delivery_datafono_enabled: delivery.datafono_enabled
-            }
+            },
+            telegram_notifications_enabled: telegramEnabled,
+            telegram_bot_token: telegramToken || null,
+            telegram_chat_id: telegramChatId || null,
           }),
         }),
         fetch(urlPayments, {
@@ -294,6 +307,56 @@ export default function OrdersHoursSettingsClient() {
               </div>
               <p className="text-xs text-slate-500 mt-1">Se sumará al total del pedido automáticamente.</p>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Telegram Notifications Section */}
+      <div className="glass-panel p-6">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div className="p-2 bg-sky-100 rounded-lg text-sky-600">
+            <Send className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-slate-800">Notificaciones Telegram</h2>
+            <p className="text-sm text-slate-500">Recibe avisos de nuevos pedidos directamente en tu móvil.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTelegramEnabled(!telegramEnabled)}
+              className={`relative w-11 h-6 transition flex items-center rounded-full ${telegramEnabled ? 'bg-sky-500' : 'bg-slate-200'}`}
+            >
+              <span className={`inline-block w-4 h-4 transform transition bg-white rounded-full ml-1 ${telegramEnabled ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {telegramEnabled && (
+          <div className="grid gap-4 md:grid-cols-2 animate-in slide-in-from-top-2">
+            <label className="text-sm font-medium text-slate-700">
+              Token del bot (pedidos)
+              <input
+                className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
+                value={telegramToken}
+                onChange={(e) => setTelegramToken(e.target.value)}
+                placeholder="123456:ABCDEF..."
+              />
+              <span className="mt-1 block text-xs text-slate-500">
+                Crea el bot con @BotFather y pega el token aqui.
+              </span>
+            </label>
+            <label className="text-sm font-medium text-slate-700">
+              Chat ID (pedidos)
+              <input
+                className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
+                value={telegramChatId}
+                onChange={(e) => setTelegramChatId(e.target.value)}
+                placeholder="Ej: -100123456789"
+              />
+              <span className="mt-1 block text-xs text-slate-500">
+                Usa https://api.telegram.org/botTOKEN/getUpdates para obtener el chat_id.
+              </span>
+            </label>
           </div>
         )}
       </div>

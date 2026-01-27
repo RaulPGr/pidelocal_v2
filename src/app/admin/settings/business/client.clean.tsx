@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import { useAdminAccess } from "@/context/AdminAccessContext";
-import { subscriptionAllowsReservations, subscriptionAllowsOrders } from "@/lib/subscription";
+import { subscriptionAllowsReservations, subscriptionAllowsOrders, SubscriptionPlan, normalizeSubscriptionPlan } from "@/lib/subscription";
 import {
   Store,
   MapPin,
@@ -19,7 +19,8 @@ import {
   Loader2,
   CheckCircle2,
   LayoutGrid,
-  List
+  List,
+  ShieldCheck
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -38,13 +39,14 @@ type Biz = {
   social?: { instagram?: string | null; facebook?: string | null; tiktok?: string | null; web?: string | null } | null;
   menu_mode?: 'fixed' | 'daily';
   menu_layout?: 'cards' | 'list' | null;
+  theme_config?: { subscription?: SubscriptionPlan };
 };
 
 // Configuracion general del negocio (datos publicos, notificaciones, redes, etc.).
 export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full" | "reservations" }) {
-  const { plan } = useAdminAccess();
-  const canManageReservations = subscriptionAllowsReservations(plan);
-  const canManageOrders = subscriptionAllowsOrders(plan);
+  const { plan: currentAccessPlan, isSuper } = useAdminAccess();
+  const canManageReservations = subscriptionAllowsReservations(currentAccessPlan);
+  const canManageOrders = subscriptionAllowsOrders(currentAccessPlan);
 
   function getTenantFromUrl(): string {
     if (typeof window === 'undefined') return '';
@@ -98,6 +100,9 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
 
   const [menuMode, setMenuMode] = useState<'fixed' | 'daily'>('fixed');
   const [menuLayout, setMenuLayout] = useState<'cards' | 'list'>('cards');
+
+  // Subscription State (Superadmin only)
+  const [subscription, setSubscription] = useState<SubscriptionPlan>("starter");
 
   function isHHMM(v: string) {
     return /^\d{2}:\d{2}$/.test(v);
@@ -184,6 +189,11 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
         // Menu config
         setMenuMode((j.data.menu_mode as 'fixed' | 'daily') || 'fixed');
         setMenuLayout((j.data.menu_layout as 'cards' | 'list') === 'list' ? 'list' : 'cards');
+
+        // Subscription
+        if (j.data.theme_config?.subscription) {
+          setSubscription(normalizeSubscriptionPlan(j.data.theme_config.subscription));
+        }
       } else {
         setMsg(j?.error || 'No se pudo cargar la configuración');
       }
@@ -204,47 +214,55 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
     try {
       const t = getTenantFromUrl();
       const url = t ? `/api/admin/business?tenant=${encodeURIComponent(t)}` : '/api/admin/business';
+
+      const payload: any = {
+        // Base
+        name,
+        slogan,
+        description: about,
+        phone,
+        whatsapp,
+        email,
+
+        // Orders & Notifications
+        notify_orders_enabled: notifyOrders,
+        notify_orders_email: notifyEmail || null,
+        orders_enabled: ordersEnabled,
+        telegram_notifications_enabled: telegramEnabled,
+
+        // Reservations
+        reservations_enabled: reservationsEnabled,
+        reservations_email: reservationsEmail || null,
+        reservations_capacity: reservationsCapacity,
+        reservations_slots: reservationsSlots,
+        reservations_lead_hours: reservationsLeadHours === '' ? null : Number(reservationsLeadHours),
+        reservations_max_days: reservationsMaxDays === '' ? null : Number(reservationsMaxDays),
+        reservations_auto_confirm: reservationsAutoConfirm,
+        reservations_blocked_dates: blockedDatesArray,
+        telegram_reservations_enabled: telegramResEnabled,
+
+        // Location & Social
+        address_line: address,
+        lat: lat !== '' ? Number(lat) : null,
+        lng: lng !== '' ? Number(lng) : null,
+        social: { instagram, facebook, tiktok, web, map_url: mapUrl },
+
+        // Hours & Menu
+        opening_hours: hours && Object.keys(hours).length ? hours : '',
+        menu_mode: menuMode,
+        menu_layout: menuLayout,
+      };
+
+      if (isSuper) {
+        payload.subscription = subscription;
+      }
+
       const r = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Base
-          name,
-          slogan,
-          description: about,
-          phone,
-          whatsapp,
-          email,
-
-          // Orders & Notifications
-          notify_orders_enabled: notifyOrders,
-          notify_orders_email: notifyEmail || null,
-          orders_enabled: ordersEnabled,
-          telegram_notifications_enabled: telegramEnabled,
-
-          // Reservations
-          reservations_enabled: reservationsEnabled,
-          reservations_email: reservationsEmail || null,
-          reservations_capacity: reservationsCapacity,
-          reservations_slots: reservationsSlots,
-          reservations_lead_hours: reservationsLeadHours === '' ? null : Number(reservationsLeadHours),
-          reservations_max_days: reservationsMaxDays === '' ? null : Number(reservationsMaxDays),
-          reservations_auto_confirm: reservationsAutoConfirm,
-          reservations_blocked_dates: blockedDatesArray,
-          telegram_reservations_enabled: telegramResEnabled,
-
-          // Location & Social
-          address_line: address,
-          lat: lat !== '' ? Number(lat) : null,
-          lng: lng !== '' ? Number(lng) : null,
-          social: { instagram, facebook, tiktok, web, map_url: mapUrl },
-
-          // Hours & Menu
-          opening_hours: hours && Object.keys(hours).length ? hours : '',
-          menu_mode: menuMode,
-          menu_layout: menuLayout,
-        }),
+        body: JSON.stringify(payload),
       });
+
       const j = await r.json();
       if (!j?.ok) throw new Error(j?.error || 'Error');
       setMsg('Cambios guardados correctamente');
@@ -289,6 +307,7 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
         )}
 
         <Section title="Configuración de Reservas" icon={Clock}>
+          {/* ... existing reservations content ... */}
           <label className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors">
             <div className={clsx("w-10 h-6 flex items-center rounded-full p-1 transition-colors", reservationsEnabled ? "bg-emerald-500" : "bg-slate-300")}>
               <div className={clsx("bg-white w-4 h-4 rounded-full shadow-sm transition-transform", reservationsEnabled ? "translate-x-4" : "translate-x-0")} />
@@ -440,6 +459,38 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
           <CheckCircle2 className="w-5 h-5" />
           <span className="text-sm font-medium">{msg}</span>
         </div>
+      )}
+
+      {/* SUPERADMIN ONLY: Subscription */}
+      {isSuper && (
+        <Section title="Superadmin" icon={ShieldCheck}>
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-slate-700">Plan de Suscripción</label>
+            <div className="flex gap-4">
+              {['starter', 'medium', 'premium'].map((p) => (
+                <label key={p} className={clsx(
+                  "cursor-pointer px-4 py-2 rounded-lg border flex items-center gap-2 text-sm font-medium transition-colors",
+                  subscription === p
+                    ? "bg-slate-900 text-white border-slate-900"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                )}>
+                  <input
+                    type="radio"
+                    name="subscription"
+                    value={p}
+                    checked={subscription === p}
+                    onChange={() => setSubscription(p as SubscriptionPlan)}
+                    className="sr-only"
+                  />
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500">
+              Controla las funcionalidades disponibles para este negocio. (Solo visible para Superadmins)
+            </p>
+          </div>
+        </Section>
       )}
 
       {/* 1. Datos Generales */}

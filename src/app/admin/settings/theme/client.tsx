@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { SubscriptionPlan } from "@/lib/subscription";
-import { normalizeSubscriptionPlan } from "@/lib/subscription";
 import { Palette, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 
 type ThemeColors = {
@@ -27,26 +25,18 @@ type ThemeHome = {
   heroOverlay?: boolean;
 };
 
-type ThemeNotifications = {
-  telegram_bot_token?: string;
-  telegram_chat_id?: string;
-  telegram_reservations_bot_token?: string;
-  telegram_reservations_chat_id?: string;
-};
-
 type ThemeConfig = {
   colors?: ThemeColors;
   fonts?: ThemeFonts;
   home?: ThemeHome;
-  subscription?: SubscriptionPlan;
-  notifications?: ThemeNotifications;
+  // Subscription is now handled in Business Settings
+  // subscription?: SubscriptionPlan;
 };
 
 const DEFAULTS: {
   colors: Required<ThemeColors>;
   fonts: Required<ThemeFonts>;
   home: Required<ThemeHome>;
-  subscription: SubscriptionPlan;
 } = {
   colors: {
     background: "#DAD6D1",
@@ -68,7 +58,6 @@ const DEFAULTS: {
   home: {
     heroOverlay: true,
   },
-  subscription: "premium",
 };
 
 function ColorInput({
@@ -177,7 +166,7 @@ function FontSelect({
   );
 }
 
-// Interfaz completa para personalizar tema, miembros y bots de Telegram.
+// Interfaz completa para personalizar tema visual
 export default function ThemeSettingsClient() {
   function getTenantFromUrl(): string {
     if (typeof window === "undefined") return "";
@@ -191,48 +180,22 @@ export default function ThemeSettingsClient() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeConfig>({});
-  const [memberEmail, setMemberEmail] = useState("");
-  const [memberPassword, setMemberPassword] = useState("");
-  const [memberRole, setMemberRole] = useState<"staff" | "manager">("staff");
-  const [memberMsg, setMemberMsg] = useState<string | null>(null);
-  const [memberSaving, setMemberSaving] = useState(false);
-  const [membersLoading, setMembersLoading] = useState(false);
-  const [membersError, setMembersError] = useState<string | null>(null);
-  const [members, setMembers] = useState<
-    Array<{ userId: string; email: string | null; role: string; createdAt: string | null; lastAccessAt: string | null }>
-  >([]);
-  const [accessLogs, setAccessLogs] = useState<Array<{ userId: string; email: string | null; accessedAt: string | null }>>([]);
-  const [accessLogsLoading, setAccessLogsLoading] = useState(false);
-  const [accessLogsError, setAccessLogsError] = useState<string | null>(null);
-  const [telegramToken, setTelegramToken] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
-  const [telegramResToken, setTelegramResToken] = useState("");
-  const [telegramResChatId, setTelegramResChatId] = useState("");
 
   const merged = useMemo(
     () => ({
       colors: { ...DEFAULTS.colors, ...(theme.colors || {}) },
       fonts: { ...DEFAULTS.fonts, ...(theme.fonts || {}) },
       home: { heroOverlay: theme.home?.heroOverlay !== false },
-      subscription: normalizeSubscriptionPlan(theme.subscription),
     }),
     [theme]
   );
 
   const heroOverlayEnabled = merged.home.heroOverlay;
-  const subscription = merged.subscription;
 
   const handleHeroOverlayChange = (checked: boolean) => {
     setTheme((prev) => ({
       ...prev,
       home: { ...(prev.home || {}), heroOverlay: checked },
-    }));
-  };
-
-  const handleSubscriptionChange = (plan: SubscriptionPlan) => {
-    setTheme((prev) => ({
-      ...prev,
-      subscription: plan,
     }));
   };
 
@@ -256,7 +219,7 @@ export default function ThemeSettingsClient() {
   function applyBrandColor() {
     const primary = brandColor;
     const primaryHover = adjustColor(brandColor, -20); // Darker
-    const secondary = "#457242"; // Keep default green for secondary actions or generate complementary? Let's keep it simple or user-defined. Actually, let's just make Topbar match brand.
+    const secondary = "#457242"; // Keep default green for secondary actions or generate complementary? Let's keep it simple or user-defined.
 
     // Topbar Gradient: Start = Brand, End = Brand Darker/Shifted
     const topStart = primary;
@@ -270,111 +233,12 @@ export default function ThemeSettingsClient() {
         accentHover: primaryHover,
         topbarStart: topStart,
         topbarEnd: topEnd,
-        // Optional: set menuHeading if desired, but slate-900 is usually better for readability.
       }
     }));
   }
   // -------------------------
 
   const [showAdvancedColors, setShowAdvancedColors] = useState(false);
-
-  function generateMemberPassword() {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@$%";
-    let out = "";
-    for (let i = 0; i < 12; i += 1) out += chars.charAt(Math.floor(Math.random() * chars.length));
-    setMemberPassword(out);
-    setMemberMsg(null);
-  }
-
-  async function addMember() {
-    const email = memberEmail.trim().toLowerCase();
-    if (!email) {
-      setMemberMsg("Introduce un email valido.");
-      return;
-    }
-    setMemberSaving(true);
-    setMemberMsg(null);
-    try {
-      const payload: Record<string, string> = { email, role: memberRole };
-      if (memberPassword.trim()) payload.password = memberPassword.trim();
-      const tenant = getTenantFromUrl();
-      const url = tenant ? `/api/admin/members?tenant=${encodeURIComponent(tenant)}` : "/api/admin/members";
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const j = await resp.json();
-      if (!resp.ok || !j?.ok) throw new Error(j?.error || "No se pudo crear el usuario");
-      if (j?.password) {
-        setMemberMsg(`Usuario creado. Entrega esta contrasena temporal: ${j.password}`);
-      } else {
-        setMemberMsg(j?.info || "Usuario vinculado al negocio.");
-      }
-      setMemberEmail("");
-      setMemberPassword("");
-      setMemberRole("staff");
-      void loadMembers();
-    } catch (e: any) {
-      setMemberMsg(e?.message || "No se pudo crear el usuario");
-    } finally {
-      setMemberSaving(false);
-    }
-  }
-
-  async function loadMembers() {
-    setMembersLoading(true);
-    setMembersError(null);
-    try {
-      const tenant = getTenantFromUrl();
-      const url = tenant ? `/api/admin/members?tenant=${encodeURIComponent(tenant)}` : "/api/admin/members";
-      const resp = await fetch(url, { cache: "no-store" });
-      const j = await resp.json();
-      if (!resp.ok || !j?.ok) throw new Error(j?.error || "No se pudieron cargar los usuarios");
-      setMembers(Array.isArray(j.members) ? j.members : []);
-    } catch (e: any) {
-      setMembersError(e?.message || "No se pudieron cargar los usuarios");
-    } finally {
-      setMembersLoading(false);
-    }
-  }
-
-  async function loadAccessLogs() {
-    setAccessLogsLoading(true);
-    setAccessLogsError(null);
-    try {
-      const tenant = getTenantFromUrl();
-      const url = tenant ? `/api/admin/member-access-logs?tenant=${encodeURIComponent(tenant)}` : "/api/admin/member-access-logs";
-      const resp = await fetch(url, { cache: "no-store" });
-      const j = await resp.json();
-      if (!resp.ok || !j?.ok) throw new Error(j?.error || "No se pudo obtener el historial de accesos");
-      setAccessLogs(Array.isArray(j.logs) ? j.logs : []);
-    } catch (e: any) {
-      setAccessLogsError(e?.message || "No se pudo obtener el historial de accesos");
-    } finally {
-      setAccessLogsLoading(false);
-    }
-  }
-
-  async function removeMember(userId: string, email?: string | null) {
-    const label = email || userId;
-    if (!window.confirm(`Eliminar acceso de ${label}?`)) return;
-    try {
-      const tenant = getTenantFromUrl();
-      const url = tenant ? `/api/admin/members?tenant=${encodeURIComponent(tenant)}` : "/api/admin/members";
-      const resp = await fetch(url, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      const j = await resp.json();
-      if (!resp.ok || !j?.ok) throw new Error(j?.error || "No se pudo eliminar el usuario");
-      setMemberMsg(`Acceso eliminado para ${label}`);
-      void loadMembers();
-    } catch (e: any) {
-      setMemberMsg(e?.message || "No se pudo eliminar el usuario");
-    }
-  }
 
   // Live preview: actualiza variables CSS usadas por el sitio
   useEffect(() => {
@@ -393,37 +257,6 @@ export default function ThemeSettingsClient() {
     if (merged.fonts.headings) r.style.setProperty("--font-headings", merged.fonts.headings ?? "");
   }, [merged]);
 
-  useEffect(() => {
-    void loadMembers();
-    void loadAccessLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    const tenant = getTenantFromUrl();
-    if (!tenant) return;
-    (async () => {
-      try {
-        const url = `/api/admin/business?tenant=${encodeURIComponent(tenant)}`;
-        const resp = await fetch(url, { cache: "no-store" });
-        const j = await resp.json();
-        if (!active) return;
-        if (j?.ok && j?.data) {
-          setTelegramToken(j.data.telegram_bot_token || "");
-          setTelegramChatId(j.data.telegram_chat_id || "");
-          setTelegramResToken(j.data.telegram_reservations_bot_token || "");
-          setTelegramResChatId(j.data.telegram_reservations_chat_id || "");
-        }
-      } catch (e) {
-        console.error("[theme] telegram fetch error", e);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   // Cargar tema actual
   useEffect(() => {
     let active = true;
@@ -435,7 +268,7 @@ export default function ThemeSettingsClient() {
         if (!resp.ok) throw new Error("No autorizado");
         const j = await resp.json();
         if (!active) return;
-        if (j?.ok) setTheme(j.theme || {});
+        if (j?.ok && j.theme) setTheme(j.theme); // Only load if theme exists, otherwise use defaults/empty
       } catch (e: any) {
         setError(e?.message || "Error");
       } finally {
@@ -460,19 +293,6 @@ export default function ThemeSettingsClient() {
       });
       const j = await resp.json();
       if (!resp.ok || !j?.ok) throw new Error(j?.error || "Error al guardar");
-      const bizUrl = tenant ? `/api/admin/business?tenant=${encodeURIComponent(tenant)}` : "/api/admin/business";
-      const bizResp = await fetch(bizUrl, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          telegram_bot_token: telegramToken || null,
-          telegram_chat_id: telegramChatId || null,
-          telegram_reservations_bot_token: telegramResToken || null,
-          telegram_reservations_chat_id: telegramResChatId || null,
-        }),
-      });
-      const bizJson = await bizResp.json();
-      if (!bizResp.ok || !bizJson?.ok) throw new Error(bizJson?.error || "Error al guardar Telegram");
     } catch (e: any) {
       setError(e?.message || "Error al guardar");
     } finally {
@@ -491,228 +311,6 @@ export default function ThemeSettingsClient() {
           Ajusta colores, tipografias y la barra superior. Cada campo tiene una breve descripcion. Los cambios se aplican
           de inmediato tras guardar.
         </p>
-      </div>
-
-      <div className="rounded border bg-white p-4">
-        <h2 className="text-sm font-medium text-slate-700">Suscripcion del negocio</h2>
-        <p className="mt-1 text-xs text-slate-500">Controla que funcionalidades estan disponibles para el comercio.</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <label
-            className={`flex items-start gap-3 rounded border px-3 py-2 text-sm ${subscription === "starter" ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"
-              }`}
-          >
-            <input
-              type="radio"
-              name="subscription"
-              value="starter"
-              checked={subscription === "starter"}
-              onChange={() => handleSubscriptionChange("starter")}
-              className="mt-1"
-            />
-            <span>
-              <span className="block font-medium">Starter</span>
-              <span className="text-xs text-slate-500">
-                Acceso basico: productos y configuracion del negocio. Sin reservas ni pedidos online.
-              </span>
-            </span>
-          </label>
-          <label
-            className={`flex items-start gap-3 rounded border px-3 py-2 text-sm ${subscription === "medium" ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"
-              }`}
-          >
-            <input
-              type="radio"
-              name="subscription"
-              value="medium"
-              checked={subscription === "medium"}
-              onChange={() => handleSubscriptionChange("medium")}
-              className="mt-1"
-            />
-            <span>
-              <span className="block font-medium">Medium</span>
-              <span className="text-xs text-slate-500">
-                Todo lo anterior e incluye gestion de reservas online (formulario publico y panel).
-              </span>
-            </span>
-          </label>
-          <label
-            className={`flex items-start gap-3 rounded border px-3 py-2 text-sm ${subscription === "premium" ? "border-emerald-500 bg-emerald-50" : "border-slate-200 bg-white"
-              }`}
-          >
-            <input
-              type="radio"
-              name="subscription"
-              value="premium"
-              checked={subscription === "premium"}
-              onChange={() => handleSubscriptionChange("premium")}
-              className="mt-1"
-            />
-            <span>
-              <span className="block font-medium">Premium</span>
-              <span className="text-xs text-slate-500">
-                Incluye pedidos online, carrito y todas las secciones del panel.
-              </span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div className="rounded border bg-white p-4">
-        <h3 className="text-lg font-semibold">Usuarios del negocio</h3>
-        <p className="text-xs text-slate-500 mb-3">
-          Crea o vincula usuarios internos (roles staff o manager). Esto no afecta a superadmins.
-        </p>
-        <div className="grid gap-3 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label className="text-sm text-slate-700">Email</label>
-            <input
-              className="border rounded px-3 py-2 w-full"
-              value={memberEmail}
-              onChange={(e) => setMemberEmail(e.target.value)}
-              type="email"
-              placeholder="usuario@correo.com"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-700">Rol</label>
-            <select
-              className="border rounded px-3 py-2 w-full"
-              value={memberRole}
-              onChange={(e) => setMemberRole(e.target.value === "manager" ? "manager" : "staff")}
-            >
-              <option value="staff">Staff (solo productos y configuracion)</option>
-              <option value="manager">Manager (puede gestionar personal)</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-slate-700">Contrasena (opcional)</label>
-            <input
-              className="border rounded px-3 py-2 w-full"
-              value={memberPassword}
-              onChange={(e) => setMemberPassword(e.target.value)}
-              type="text"
-              placeholder="Deja vacio para generar una"
-            />
-            <button
-              type="button"
-              className="mt-2 text-xs text-blue-600"
-              onClick={generateMemberPassword}
-            >
-              Generar contrasena segura
-            </button>
-          </div>
-        </div>
-        {memberMsg && (
-          <div className="mt-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            {memberMsg}
-          </div>
-        )}
-        <div className="mt-4">
-          <button
-            onClick={() => void addMember()}
-            disabled={memberSaving}
-            className="rounded bg-emerald-600 px-4 py-2 text-white disabled:opacity-60"
-          >
-            {memberSaving ? "Creando..." : "Agregar usuario"}
-          </button>
-        </div>
-      </div>
-
-      <div className="rounded border bg-white p-4">
-        <h4 className="text-sm font-medium text-slate-700 mb-2">Usuarios actuales</h4>
-        {membersLoading ? (
-          <div className="text-sm text-slate-500">Cargando usuarios...</div>
-        ) : membersError ? (
-          <div className="rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
-            {membersError}
-          </div>
-        ) : members.length === 0 ? (
-          <div className="text-sm text-slate-500">No hay usuarios vinculados todavia.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="border-b px-3 py-2">Email</th>
-                  <th className="border-b px-3 py-2">Rol</th>
-                  <th className="border-b px-3 py-2">Alta</th>
-                  <th className="border-b px-3 py-2">Último acceso</th>
-                  <th className="border-b px-3 py-2 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => {
-                  const date = m.createdAt ? new Date(m.createdAt) : null;
-                  const formatted = date ? date.toLocaleString() : "-";
-                  const lastAccess = m.lastAccessAt ? new Date(m.lastAccessAt).toLocaleString() : "Nunca";
-                  return (
-                    <tr key={m.userId} className="hover:bg-slate-50">
-                      <td className="border-b px-3 py-2">{m.email || "(sin email)"}</td>
-                      <td className="border-b px-3 py-2 capitalize">{m.role}</td>
-                      <td className="border-b px-3 py-2">{formatted}</td>
-                      <td className="border-b px-3 py-2">{lastAccess}</td>
-                      <td className="border-b px-3 py-2 text-right">
-                        <button
-                          type="button"
-                          className="text-sm text-red-600 hover:underline"
-                          onClick={() => void removeMember(m.userId, m.email)}
-                        >
-                          Quitar acceso
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="rounded border bg-white p-4">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h4 className="text-sm font-medium text-slate-700">Últimos accesos al panel</h4>
-            <p className="text-xs text-slate-500">Se actualiza automáticamente cada vez que un miembro entra en /admin.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void loadAccessLogs()}
-            className="rounded border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
-          >
-            Actualizar
-          </button>
-        </div>
-        {accessLogsLoading ? (
-          <div className="text-sm text-slate-500">Cargando historial...</div>
-        ) : accessLogsError ? (
-          <div className="rounded border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">{accessLogsError}</div>
-        ) : accessLogs.length === 0 ? (
-          <div className="text-sm text-slate-500">Aún no hay accesos registrados.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="border-b px-3 py-2">Fecha y hora</th>
-                  <th className="border-b px-3 py-2">Usuario</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accessLogs.map((log, idx) => {
-                  const date = log.accessedAt ? new Date(log.accessedAt) : null;
-                  const formatted = date ? date.toLocaleString() : "-";
-                  return (
-                    <tr key={`${log.userId}-${idx}`} className="hover:bg-slate-50">
-                      <td className="border-b px-3 py-2">{formatted}</td>
-                      <td className="border-b px-3 py-2">{log.email || "(sin email)"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
       {/* Vista previa barra superior */}
@@ -799,222 +397,162 @@ export default function ThemeSettingsClient() {
             <Palette className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-slate-800">Color Corporativo</h2>
-            <p className="text-slate-600 text-sm mb-4">
-              Elige el color principal de tu marca. Automáticamente generaremos una paleta elegante para los botones y la barra superior.
+            <h3 className="font-semibold text-slate-800">Color de Marca Mágico</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Elige tu color principal y generaremos automáticamente una paleta armoniosa para tu negocio.
             </p>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                <input
-                  type="color"
-                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
-                  value={brandColor}
-                  onChange={e => setBrandColor(e.target.value)}
-                />
-                <span className="font-mono text-slate-500 uppercase">{brandColor}</span>
-              </div>
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Tu color principal</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={brandColor}
+                    onChange={e => setBrandColor(e.target.value)}
+                    className="h-10 w-16 cursor-pointer rounded border border-slate-300 p-1"
+                  />
+                  <input
+                    type="text"
+                    value={brandColor}
+                    onChange={e => setBrandColor(e.target.value)}
+                    className="w-24 rounded border border-slate-300 px-3 py-2 text-sm uppercase"
+                    maxLength={7}
+                  />
+                </div>
+              </label>
+
               <button
                 onClick={applyBrandColor}
-                className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-colors shadow-md font-medium"
+                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10 mb-[1px]"
               >
                 <Wand2 className="w-4 h-4" />
-                Aplicar Automáticamente
+                Aplicar Paleta Mágica
               </button>
             </div>
-            <p className="mt-3 text-xs text-slate-500">
-              Esto actualizará el "Color Primario" y el degradado de la barra superior. Puedes ajustar los detalles finos abajo.
-            </p>
           </div>
         </div>
       </div>
 
-      {/* Advanced Colors Toggle */}
-      <div className="rounded border bg-white shadow-sm overflow-hidden">
+      {/* ADVANCED COLORS TOGGLE */}
+      <div className="border-t border-slate-100 pt-4">
         <button
           onClick={() => setShowAdvancedColors(!showAdvancedColors)}
-          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+          className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors w-full justify-between p-2 rounded hover:bg-slate-50"
         >
-          <div>
-            <h2 className="text-sm font-bold text-slate-700">Ajustes de Color Avanzados</h2>
-            <p className="text-xs text-slate-500">Control manual de cada elemento (texto, fondos, hover...)</p>
-          </div>
-          {showAdvancedColors ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+          <span>Ajustes Avanzados de Color (Manual)</span>
+          {showAdvancedColors ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
         {showAdvancedColors && (
-          <div className="p-4 grid grid-cols-1 gap-4 md:grid-cols-2 animate-in slide-in-from-top-2">
-            <ColorInput
-              label="Fondo principal"
-              desc="Color de fondo general de la web y tarjetas."
-              value={theme.colors?.background}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, background: v } }))}
-            />
-            <ColorInput
-              label="Texto"
-              desc="Color principal de los textos (parrafos y titulos)."
-              value={theme.colors?.text}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, text: v } }))}
-            />
-            <ColorInput
-              label="Títulos de la carta"
-              desc="Color de los encabezados de categoría dentro de la carta / menú."
-              value={theme.colors?.menuHeading}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, menuHeading: v } }))}
-            />
-            <ColorInput
-              label="Texto secundario"
-              desc="Color para descripciones y etiquetas (menos destacado)."
-              value={theme.colors?.muted}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, muted: v } }))}
-            />
-            <ColorInput
-              label="Primario (botones/enlaces)"
-              desc="Color de accion principal en botones y enlaces."
-              value={theme.colors?.accent}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accent: v } }))}
-            />
-            <ColorInput
-              label="Primario hover"
-              desc="Color del primario al pasar el cursor."
-              value={theme.colors?.accentHover}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accentHover: v } }))}
-            />
-            <ColorInput
-              label="Secundario (verde)"
-              desc="Color para acciones positivas y acentos secundarios."
-              value={theme.colors?.secondary}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondary: v } }))}
-            />
-            <ColorInput
-              label="Secundario hover"
-              desc="Color del secundario al pasar el cursor."
-              value={theme.colors?.secondaryHover}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondaryHover: v } }))}
-            />
-            <ColorInput
-              label="Barra superior (inicio)"
-              desc="Color izquierdo del degradado de la barra superior."
-              value={theme.colors?.topbarStart}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarStart: v } }))}
-            />
-            <ColorInput
-              label="Barra superior (fin)"
-              desc="Color derecho del degradado de la barra superior."
-              value={theme.colors?.topbarEnd}
-              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarEnd: v } }))}
-            />
+          <div className="mt-4 grid gap-6 md:grid-cols-2 animate-in slide-in-from-top-2 fade-in duration-300">
+            <div>
+              <h3 className="mb-2 font-medium">Generales</h3>
+              <div className="space-y-3 pl-2 border-l-2 border-slate-100">
+                <ColorInput
+                  label="Fondo pagina"
+                  value={merged.colors.background}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, background: v } }))}
+                />
+                <ColorInput
+                  label="Texto principal"
+                  value={merged.colors.text}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, text: v } }))}
+                />
+                <ColorInput
+                  label="Texto atenuado"
+                  value={merged.colors.muted}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, muted: v } }))}
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-2 font-medium">Botones y Acciones</h3>
+              <div className="space-y-3 pl-2 border-l-2 border-slate-100">
+                <ColorInput
+                  label="Acento (Botones)"
+                  value={merged.colors.accent}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, accent: v } }))}
+                />
+                <ColorInput
+                  label="Acento hover"
+                  value={merged.colors.accentHover}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, accentHover: v } }))}
+                />
+                <ColorInput
+                  label="Secundario"
+                  value={merged.colors.secondary}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, secondary: v } }))}
+                />
+                <ColorInput
+                  label="Secundario hover"
+                  value={merged.colors.secondaryHover}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, secondaryHover: v } }))}
+                />
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-2 font-medium">Navegación Superior</h3>
+              <div className="space-y-3 pl-2 border-l-2 border-slate-100">
+                <ColorInput
+                  label="Degradado Inicio"
+                  value={merged.colors.topbarStart}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, topbarStart: v } }))}
+                />
+                <ColorInput
+                  label="Degradado Fin"
+                  value={merged.colors.topbarEnd}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, topbarEnd: v } }))}
+                />
+                <ColorInput
+                  label="Titulos en Menu"
+                  desc="Color de los titulos de secciones en la carta"
+                  value={merged.colors.menuHeading}
+                  onChange={(v) => setTheme((p) => ({ ...p, colors: { ...p.colors, menuHeading: v } }))}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Tipografias */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FontSelect
-          label="Fuente del cuerpo"
-          desc="Familia tipografica para parrafos y la interfaz."
-          value={theme.fonts?.body}
-          onChange={(v) => setTheme((t) => ({ ...t, fonts: { ...t.fonts, body: v } }))}
-          placeholder="Ej: Inter, system-ui, sans-serif"
-        />
-        <FontSelect
-          label="Fuente de titulos"
-          desc="Familia tipografica para encabezados (H1-H5)."
-          value={theme.fonts?.headings}
-          onChange={(v) => setTheme((t) => ({ ...t, fonts: { ...t.fonts, headings: v } }))}
-          placeholder="Ej: Poppins, system-ui, sans-serif"
-        />
-      </div>
-
-      {/* Portada */}
-      <div className="rounded border bg-white p-4">
-        <h2 className="text-sm font-medium text-slate-700">Portada</h2>
-        <label className="mt-3 inline-flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="h-4 w-4"
-            checked={heroOverlayEnabled}
-            onChange={(e) => handleHeroOverlayChange(e.target.checked)}
+      <div className="border-t pt-4">
+        <h3 className="mb-2 font-semibold">Tipografias</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <FontSelect
+            label="Fuente principal (Cuerpo)"
+            value={merged.fonts.body}
+            onChange={(v) => setTheme((p) => ({ ...p, fonts: { ...p.fonts, body: v } }))}
+            placeholder="Ej: Inter, sans-serif"
           />
-          <span>Mostrar nombre, eslogan y boton sobre la imagen principal</span>
-        </label>
-        <p className="mt-1 text-xs text-slate-500">
-          Si lo desactivas, el nombre y el boton "Ver menu ahora" solo se mostraran en el banner superior.
-        </p>
-      </div>
-
-      <div className="rounded border bg-white p-4">
-        <h2 className="text-sm font-medium text-slate-700">Telegram (solo superadmins)</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Define el bot y el chat oficiales. En /settings cada negocio solo podra activar o desactivar los avisos.
-        </p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="text-sm font-medium text-slate-700">
-            Token del bot (pedidos)
-            <input
-              className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-              value={telegramToken}
-              onChange={(e) => setTelegramToken(e.target.value)}
-              placeholder="123456:ABCDEF..."
-            />
-            <span className="mt-1 block text-xs text-slate-500">
-              Crea el bot con @BotFather y pega el token aqui. Usa un bot distinto por comercio si lo necesitas.
-            </span>
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Chat ID (pedidos)
-            <input
-              className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-              value={telegramChatId}
-              onChange={(e) => setTelegramChatId(e.target.value)}
-              placeholder="Ej: -100123456789"
-            />
-            <span className="mt-1 block text-xs text-slate-500">
-              Inicia el chat con el bot y usa https://api.telegram.org/botTOKEN/getUpdates para obtener el chat_id.
-            </span>
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Token del bot (reservas)
-            <input
-              className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-              value={telegramResToken}
-              onChange={(e) => setTelegramResToken(e.target.value)}
-              placeholder="Opcional, puedes reutilizar el mismo bot"
-            />
-          </label>
-          <label className="text-sm font-medium text-slate-700">
-            Chat ID (reservas)
-            <input
-              className="mt-1 w-full rounded border border-slate-200 px-3 py-2"
-              value={telegramResChatId}
-              onChange={(e) => setTelegramResChatId(e.target.value)}
-              placeholder="Ej: -100123456789"
-            />
-          </label>
+          <FontSelect
+            label="Fuente titulos"
+            value={merged.fonts.headings}
+            onChange={(v) => setTheme((p) => ({ ...p, fonts: { ...p.fonts, headings: v } }))}
+            placeholder="Ej: Montserrat, sans-serif"
+          />
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button onClick={save} disabled={saving} className="btn-brand">
+      <div className="border-t pt-4">
+        <h3 className="mb-2 font-semibold">Portada</h3>
+        <label className="flex items-center gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            checked={heroOverlayEnabled}
+            onChange={(e) => handleHeroOverlayChange(e.target.checked)}
+          />
+          Oscurecer imagen de cabecera (Overlay)
+        </label>
+        <p className="text-xs text-slate-500 ml-5 mt-1">
+          Añade una capa oscura semitransparente sobre la imagen de cabecera para mejorar la legibilidad del texto/logo.
+        </p>
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button onClick={() => void save()} disabled={saving} className="rounded bg-black px-4 py-2 text-white disabled:opacity-50">
           {saving ? "Guardando..." : "Guardar cambios"}
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            setTheme((prev) => ({
-              ...prev,
-              colors: { ...DEFAULTS.colors },
-              fonts: { ...DEFAULTS.fonts },
-              home: { ...DEFAULTS.home },
-              subscription: DEFAULTS.subscription,
-            }))
-          }
-          className="rounded border px-3 py-1 text-sm"
-          title="Restaura los valores por defecto del tema"
-        >
-          Restablecer por defecto
-        </button>
-        <span className="text-sm text-slate-600">Los cambios se aplican al guardar.</span>
       </div>
     </div>
   );
