@@ -53,7 +53,7 @@ export default function BillingPage() {
                 <p className="text-slate-500">Gestiona tu suscripción y métodos de pago.</p>
             </div>
 
-            {isTrial && (
+            {isTrial && currentPlan !== 'starter' && (
                 <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>
                         <h3 className="text-lg font-bold text-orange-800 flex items-center gap-2">
