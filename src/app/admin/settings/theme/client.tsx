@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { SubscriptionPlan } from "@/lib/subscription";
 import { normalizeSubscriptionPlan } from "@/lib/subscription";
+import { Palette, Wand2, ChevronDown, ChevronUp } from "lucide-react";
 
 type ThemeColors = {
   background?: string;
@@ -234,6 +235,48 @@ export default function ThemeSettingsClient() {
       subscription: plan,
     }));
   };
+
+  // --- MAGIC COLOR LOGIC ---
+  const [brandColor, setBrandColor] = useState("#CC2936");
+
+  // Helper to darken a hex color
+  function adjustColor(hex: string, amount: number) {
+    let color = hex.replace("#", "");
+    if (color.length === 3) color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+    const num = parseInt(color, 16);
+    let r = (num >> 16) + amount;
+    let g = ((num >> 8) & 0x00ff) + amount;
+    let b = (num & 0x0000ff) + amount;
+    if (r > 255) r = 255; else if (r < 0) r = 0;
+    if (g > 255) g = 255; else if (g < 0) g = 0;
+    if (b > 255) b = 255; else if (b < 0) b = 0;
+    return "#" + (g | (b << 8) | (r << 16)).toString(16).padStart(6, "0");
+  }
+
+  function applyBrandColor() {
+    const primary = brandColor;
+    const primaryHover = adjustColor(brandColor, -20); // Darker
+    const secondary = "#457242"; // Keep default green for secondary actions or generate complementary? Let's keep it simple or user-defined. Actually, let's just make Topbar match brand.
+
+    // Topbar Gradient: Start = Brand, End = Brand Darker/Shifted
+    const topStart = primary;
+    const topEnd = adjustColor(primary, -30); // Darker gradient end
+
+    setTheme(prev => ({
+      ...prev,
+      colors: {
+        ...prev.colors,
+        accent: primary,
+        accentHover: primaryHover,
+        topbarStart: topStart,
+        topbarEnd: topEnd,
+        // Optional: set menuHeading if desired, but slate-900 is usually better for readability.
+      }
+    }));
+  }
+  // -------------------------
+
+  const [showAdvancedColors, setShowAdvancedColors] = useState(false);
 
   function generateMemberPassword() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@$%";
@@ -749,67 +792,120 @@ export default function ThemeSettingsClient() {
       </div>
 
       {/* Colores */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ColorInput
-          label="Fondo principal"
-          desc="Color de fondo general de la web y tarjetas."
-          value={theme.colors?.background}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, background: v } }))}
-        />
-        <ColorInput
-          label="Texto"
-          desc="Color principal de los textos (parrafos y titulos)."
-          value={theme.colors?.text}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, text: v } }))}
-        />
-        <ColorInput
-          label="Títulos de la carta"
-          desc="Color de los encabezados de categoría dentro de la carta / menú."
-          value={theme.colors?.menuHeading}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, menuHeading: v } }))}
-        />
-        <ColorInput
-          label="Texto secundario"
-          desc="Color para descripciones y etiquetas (menos destacado)."
-          value={theme.colors?.muted}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, muted: v } }))}
-        />
-        <ColorInput
-          label="Primario (botones/enlaces)"
-          desc="Color de accion principal en botones y enlaces."
-          value={theme.colors?.accent}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accent: v } }))}
-        />
-        <ColorInput
-          label="Primario hover"
-          desc="Color del primario al pasar el cursor."
-          value={theme.colors?.accentHover}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accentHover: v } }))}
-        />
-        <ColorInput
-          label="Secundario (verde)"
-          desc="Color para acciones positivas y acentos secundarios."
-          value={theme.colors?.secondary}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondary: v } }))}
-        />
-        <ColorInput
-          label="Secundario hover"
-          desc="Color del secundario al pasar el cursor."
-          value={theme.colors?.secondaryHover}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondaryHover: v } }))}
-        />
-        <ColorInput
-          label="Barra superior (inicio)"
-          desc="Color izquierdo del degradado de la barra superior."
-          value={theme.colors?.topbarStart}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarStart: v } }))}
-        />
-        <ColorInput
-          label="Barra superior (fin)"
-          desc="Color derecho del degradado de la barra superior."
-          value={theme.colors?.topbarEnd}
-          onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarEnd: v } }))}
-        />
+      {/* MAGIC BRAND COLOR PICKER */}
+      <div className="rounded border border-emerald-100 bg-emerald-50/50 p-6 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600">
+            <Palette className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-slate-800">Color Corporativo</h2>
+            <p className="text-slate-600 text-sm mb-4">
+              Elige el color principal de tu marca. Automáticamente generaremos una paleta elegante para los botones y la barra superior.
+            </p>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                <input
+                  type="color"
+                  className="w-10 h-10 rounded cursor-pointer border-0 p-0"
+                  value={brandColor}
+                  onChange={e => setBrandColor(e.target.value)}
+                />
+                <span className="font-mono text-slate-500 uppercase">{brandColor}</span>
+              </div>
+              <button
+                onClick={applyBrandColor}
+                className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-colors shadow-md font-medium"
+              >
+                <Wand2 className="w-4 h-4" />
+                Aplicar Automáticamente
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Esto actualizará el "Color Primario" y el degradado de la barra superior. Puedes ajustar los detalles finos abajo.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Advanced Colors Toggle */}
+      <div className="rounded border bg-white shadow-sm overflow-hidden">
+        <button
+          onClick={() => setShowAdvancedColors(!showAdvancedColors)}
+          className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+        >
+          <div>
+            <h2 className="text-sm font-bold text-slate-700">Ajustes de Color Avanzados</h2>
+            <p className="text-xs text-slate-500">Control manual de cada elemento (texto, fondos, hover...)</p>
+          </div>
+          {showAdvancedColors ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+        </button>
+
+        {showAdvancedColors && (
+          <div className="p-4 grid grid-cols-1 gap-4 md:grid-cols-2 animate-in slide-in-from-top-2">
+            <ColorInput
+              label="Fondo principal"
+              desc="Color de fondo general de la web y tarjetas."
+              value={theme.colors?.background}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, background: v } }))}
+            />
+            <ColorInput
+              label="Texto"
+              desc="Color principal de los textos (parrafos y titulos)."
+              value={theme.colors?.text}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, text: v } }))}
+            />
+            <ColorInput
+              label="Títulos de la carta"
+              desc="Color de los encabezados de categoría dentro de la carta / menú."
+              value={theme.colors?.menuHeading}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, menuHeading: v } }))}
+            />
+            <ColorInput
+              label="Texto secundario"
+              desc="Color para descripciones y etiquetas (menos destacado)."
+              value={theme.colors?.muted}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, muted: v } }))}
+            />
+            <ColorInput
+              label="Primario (botones/enlaces)"
+              desc="Color de accion principal en botones y enlaces."
+              value={theme.colors?.accent}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accent: v } }))}
+            />
+            <ColorInput
+              label="Primario hover"
+              desc="Color del primario al pasar el cursor."
+              value={theme.colors?.accentHover}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, accentHover: v } }))}
+            />
+            <ColorInput
+              label="Secundario (verde)"
+              desc="Color para acciones positivas y acentos secundarios."
+              value={theme.colors?.secondary}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondary: v } }))}
+            />
+            <ColorInput
+              label="Secundario hover"
+              desc="Color del secundario al pasar el cursor."
+              value={theme.colors?.secondaryHover}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, secondaryHover: v } }))}
+            />
+            <ColorInput
+              label="Barra superior (inicio)"
+              desc="Color izquierdo del degradado de la barra superior."
+              value={theme.colors?.topbarStart}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarStart: v } }))}
+            />
+            <ColorInput
+              label="Barra superior (fin)"
+              desc="Color derecho del degradado de la barra superior."
+              value={theme.colors?.topbarEnd}
+              onChange={(v) => setTheme((t) => ({ ...t, colors: { ...t.colors, topbarEnd: v } }))}
+            />
+          </div>
+        )}
       </div>
 
       {/* Tipografias */}

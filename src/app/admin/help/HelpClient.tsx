@@ -75,7 +75,17 @@ export default function HelpClient({ businessId }: { businessId: string }) {
                 },
                 {
                     title: "Cambiar logotipo y colores",
-                    content: "Haz que tu marca destaque. En Configuración > Tema puedes subir tu logotipo (recomendamos formato PNG transparente) y elegir el color principal que teñirá los botones y enlaces de tu carta digital."
+                    content: (
+                        <div className="space-y-4">
+                            <p>Haz que tu marca destaque.</p>
+                            <ol className="list-decimal pl-5 space-y-2 text-slate-700">
+                                <li>Ve a <strong>Configuración &gt; Tema</strong>.</li>
+                                <li>En <strong>"Color Corporativo"</strong>, elige tu color principal. El sistema ajustará automáticamente los botones y degradados para que queden elegantes.</li>
+                                <li>Si quieres más control, despliega "Ajustes Avanzados" para cambiar colores de texto o fondo.</li>
+                                <li>También puedes subir tu logo en Configuración &gt; Empresa &gt; Imágenes.</li>
+                            </ol>
+                        </div>
+                    )
                 }
             ]
         },
