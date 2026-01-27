@@ -60,9 +60,25 @@ export default function RegisterPage() {
             if (!res.ok) throw new Error(j.error || "Error al configurar el restaurante.");
 
             // Success!
-            // We redirect to login page with a success message AND the tenant context
-            // to ensure the middleware updates the cookie to the new business.
-            router.push(`/login?registered=true&email=${encodeURIComponent(email)}&tenant=${slug}`);
+            // Determine redirect URL based on environment
+            const host = window.location.host; // e.g. pidelocal.es or localhost:3000
+            const protocol = window.location.protocol;
+
+            // Basic check: if we are on the main production domain, redirect to subdomain.
+            // Adjust 'pidelocal.es' if your domain is different or use environment var if exposed.
+            // For safety, we can check if we are NOT on localhost and NOT on a vercel preview.
+            const isProduction = !host.includes("localhost") && !host.includes(".vercel.app");
+
+            if (isProduction) {
+                // Redirect to https://{slug}.pidelocal.es/login...
+                // We use the same protocol (http/https)
+                const targetUrl = `${protocol}//${slug}.pidelocal.es/login?registered=true&email=${encodeURIComponent(email)}`;
+                // Use window.location.href for full cross-domain redirect
+                window.location.href = targetUrl;
+            } else {
+                // Localhost or Preview: use query param to keep context
+                router.push(`/login?registered=true&email=${encodeURIComponent(email)}&tenant=${slug}`);
+            }
 
         } catch (e: any) {
             console.error(e);
