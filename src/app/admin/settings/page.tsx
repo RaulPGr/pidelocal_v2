@@ -3,10 +3,11 @@
 import { useState } from "react";
 import BusinessSettingsClient from "@/app/admin/settings/business/client.clean";
 import OrdersHoursSettingsClient from "@/app/admin/settings/orders/client";
+import ThemeSettingsClient from "@/app/admin/settings/theme/client";
 import SettingsClient from "./settingsClient";
 import { useAdminAccess } from "@/context/AdminAccessContext";
 import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/subscription";
-import { Store, Calendar, ShoppingBag, CreditCard, Clock } from "lucide-react";
+import { Store, Calendar, ShoppingBag, CreditCard, Clock, Palette } from "lucide-react";
 import clsx from "clsx";
 import PushNotificationManager from "@/components/admin/PushNotificationManager";
 
@@ -19,6 +20,7 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: "business", label: "Negocio", icon: Store, show: true },
+    { id: "theme", label: "Tema", icon: Palette, show: true },
     { id: "orders", label: "Pedidos y Horarios", icon: ShoppingBag, show: allowOrders },
     { id: "payments", label: "Pagos", icon: CreditCard, show: allowOrders },
   ];
@@ -65,6 +67,10 @@ export default function SettingsPage() {
             </div>
             <BusinessSettingsClient mode="full" />
           </div>
+        )}
+
+        {activeTab === "theme" && (
+          <ThemeSettingsClient />
         )}
 
 
