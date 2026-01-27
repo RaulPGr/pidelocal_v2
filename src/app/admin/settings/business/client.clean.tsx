@@ -528,6 +528,19 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
             <label className="input-label">Dirección Completa</label>
             <input className="glass-input w-full" value={address} onChange={e => setAddress(e.target.value)} placeholder="Calle Ejemplo 123, Ciudad" />
           </div>
+          <div className="md:col-span-2 space-y-2">
+            <label className="input-label flex items-center gap-2"><MapPin className="w-3 h-3" /> Google Maps (URL Embed)</label>
+            <input
+              className="glass-input w-full"
+              value={mapUrl}
+              onChange={e => setMapUrl(e.target.value)}
+              placeholder="https://www.google.com/maps/embed?pb=..."
+            />
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              <strong>Cómo obtenerlo:</strong> Ve a Google Maps &gt; Busca tu negocio &gt; Botón "Compartir" &gt; Pestaña "Insertar un mapa" &gt; Copiar HTML.
+              Pega aquí el enlace que aparece dentro de <code>src="..."</code> o todo el código iframe (lo limpiaremos automáticamente).
+            </p>
+          </div>
         </div>
       </Section>
 
@@ -586,19 +599,7 @@ export default function BusinessSettingsClient({ mode = "full" }: { mode?: "full
             <label className="input-label flex items-center gap-2"><Facebook className="w-3 h-3" /> Facebook</label>
             <input className="glass-input w-full" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="url_perfil" />
           </div>
-          <div className="md:col-span-2 space-y-2">
-            <label className="input-label flex items-center gap-2"><MapPin className="w-3 h-3" /> Google Maps (URL Embed)</label>
-            <input
-              className="glass-input w-full"
-              value={mapUrl}
-              onChange={e => setMapUrl(e.target.value)}
-              placeholder="https://www.google.com/maps/embed?pb=..."
-            />
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              <strong>Cómo obtenerlo:</strong> Ve a Google Maps &gt; Busca tu negocio &gt; Botón "Compartir" &gt; Pestaña "Insertar un mapa" &gt; Copiar HTML.
-              Pega aquí el enlace que aparece dentro de <code>src="..."</code> o todo el código iframe (lo limpiaremos automáticamente).
-            </p>
-          </div>
+
           <div className="space-y-2">
             <label className="input-label flex items-center gap-2"><Globe className="w-3 h-3" /> Website</label>
             <input className="glass-input w-full" value={web} onChange={e => setWeb(e.target.value)} placeholder="https://..." />
