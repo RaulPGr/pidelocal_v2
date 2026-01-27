@@ -13,12 +13,12 @@ import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Globe, ArrowRight, Sta
 
 // Defaults
 const INFO_DEFAULT = {
-    nombre: "Pizzeria napolitana",
-    slogan: "La tradición de Nápoles en cada porción.",
+    nombre: "Tu Restaurante",
+    slogan: "La mejor gastronomía, directa a tu mesa.",
     telefono: "+34 600 000 000",
-    email: "info@mirestaurante.com",
+    email: "hola@tunegocio.com",
     whatsapp: "+34600000000",
-    direccion: "Calle Mayor 123, 30001 Murcia, España",
+    direccion: "Calle Principal 1, Ciudad",
     logoUrl: "/images/pidelocal.png",
     fachadaUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop",
     menuPath: "/menu",
@@ -370,7 +370,7 @@ export default function TenantLanding() {
                     <div className="space-y-4 text-slate-600 text-lg leading-relaxed max-w-2xl mx-auto">
                         <p>
                             {cfg?.business?.description || (
-                                <>En <strong>{INFO.nombre}</strong> no solo cocinamos, revivimos tradiciones. Cada plato es un tributo a la autenticidad, preparado con ingredientes seleccionados y pasión artesanal.</>
+                                <>En <strong>{INFO.nombre}</strong> nos apasiona la buena comida. Utilizamos ingredientes frescos y de calidad para ofrecerte una experiencia única en cada pedido. ¡Gracias por elegirnos!</>
                             )}
                         </p>
                         <p>
