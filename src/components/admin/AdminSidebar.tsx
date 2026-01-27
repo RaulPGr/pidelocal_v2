@@ -138,7 +138,7 @@ export default function AdminSidebar() {
                     <div className="p-4 border-t border-slate-100 space-y-4">
                         <InstallAppButton />
 
-                        {isTrial && trialEndsAt && (
+                        {isTrial && trialEndsAt && !isStarter && (
                             <div className="pb-4 border-b border-slate-100">
                                 <TrialWidget endDate={trialEndsAt} plan={plan} />
                             </div>

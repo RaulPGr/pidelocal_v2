@@ -2,9 +2,12 @@ export type SubscriptionPlan = "starter" | "medium" | "premium";
 
 export function normalizeSubscriptionPlan(input: unknown): SubscriptionPlan {
   const raw = String(input ?? "").trim().toLowerCase();
-  if (raw === "starter") return "starter";
+  // Normalize variations
+  if (raw.includes("starter") || raw.includes("piloto") || raw.includes("prueba")) return "starter";
   if (raw === "medium") return "medium";
   if (raw === "premium") return "premium";
+
+  // Default fallback
   return "premium";
 }
 
