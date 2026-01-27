@@ -340,6 +340,10 @@ export default function HelpClient({ businessId }: { businessId: string }) {
         {
             q: "¿Cómo puedo darme de baja?",
             a: "Puedes cancelar tu cuenta en cualquier momento desde 'Configuración > Facturación'. Al final de la página encontrarás la 'Zona de Peligro' para eliminar tu cuenta y todos tus datos permanentemente. No hay permanencia."
+        },
+        {
+            q: "¿Cómo cambio la ubicación del mapa en mi web?",
+            a: "Desde 'Configuración > Contacto y Ubicación' puedes pegar el enlace de Google Maps. Busca tu negocio en Google Maps, dale a 'Compartir', elige 'Insertar un mapa' y copia el 'HTML'. Pégalo en el campo 'Google Maps (URL Embed)' y aparecerá automáticamente."
         }
     ];
 

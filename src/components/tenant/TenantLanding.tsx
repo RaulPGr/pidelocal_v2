@@ -156,9 +156,21 @@ export default function TenantLanding() {
     }, [cfg?.coords]);
 
     const mapaSrc = useMemo(() => {
-        if (cfg?.mapUrl) return String(cfg.mapUrl);
+        // 1. Check explicit mapUrl (legacy or root)
+        let url = cfg?.mapUrl || cfg?.social?.map_url;
+
+        // 2. If user pasted full iframe code, extract src
+        if (url && typeof url === 'string') {
+            if (url.includes('<iframe')) {
+                const match = url.match(/src="([^"]+)"/);
+                if (match && match[1]) url = match[1];
+            }
+            return url;
+        }
+
+        // 3. Fallback to coords
         return `https://maps.google.com/maps?q=${COORDS_USED.lat},${COORDS_USED.lng}&z=${COORDS_USED.zoom}&output=embed`;
-    }, [cfg?.mapUrl, COORDS_USED]);
+    }, [cfg?.mapUrl, cfg?.social?.map_url, COORDS_USED]);
 
     const ldData = useMemo(() => jsonLd(INFO, HORARIOS_USED, COORDS_USED), [INFO, HORARIOS_USED, COORDS_USED]);
 
