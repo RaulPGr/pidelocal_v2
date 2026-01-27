@@ -4,7 +4,7 @@ import { useState } from "react";
 import BusinessSettingsClient from "@/app/admin/settings/business/client.clean";
 import OrdersHoursSettingsClient from "@/app/admin/settings/orders/client";
 import ThemeSettingsClient from "@/app/admin/settings/theme/client";
-import SettingsClient from "./settingsClient";
+
 import { useAdminAccess } from "@/context/AdminAccessContext";
 import { subscriptionAllowsOrders, subscriptionAllowsReservations } from "@/lib/subscription";
 import { Store, Calendar, ShoppingBag, CreditCard, Clock, Palette, Users } from "lucide-react";
@@ -18,15 +18,12 @@ export default function SettingsPage() {
   const allowOrders = subscriptionAllowsOrders(plan) || isSuper;
   const allowReservations = subscriptionAllowsReservations(plan) || isSuper;
 
-  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "payments" | "theme" | "team">("business");
+  const [activeTab, setActiveTab] = useState<"business" | "reservations" | "orders" | "theme" | "team">("business");
 
   const tabs = [
     { id: "business", label: "Negocio", icon: Store, show: true },
     { id: "theme", label: "Tema", icon: Palette, show: true },
-    { id: "orders", label: "Pedidos y Horarios", icon: ShoppingBag, show: allowOrders },
-    { id: "payments", label: "Pagos", icon: CreditCard, show: allowOrders },
-    // "Team" tab visible to everyone or maybe restricted? Assuming purely internal management, so ok for now.
-    // Ideally restricted to owners/managers but let component handle it or show for all.
+    { id: "orders", label: "Pedidos y Pagos", icon: ShoppingBag, show: allowOrders },
     { id: "team", label: "Equipo", icon: Users, show: true },
   ];
 
@@ -86,10 +83,6 @@ export default function SettingsPage() {
           <div className="space-y-8">
             <OrdersHoursSettingsClient />
           </div>
-        )}
-
-        {activeTab === "payments" && (
-          <SettingsClient />
         )}
       </div>
     </div>
