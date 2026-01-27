@@ -15,12 +15,12 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Generate Account Link (Standard/Express)
-        // We create a new account or use existing one? 
-        // For Standard Connect, we typically use OAuth flow (authorize_url).
-        // Let's use standard OAuth for simplicity and control.
+        // We use the root domain for the callback to match Stripe whitelist
+        const rootDomain = process.env.NEXT_PUBLIC_SITE_URL || "https://pidelocal.es";
 
-        // State to verify callback security
-        const state = `tenant:${tenant.id}`;
+        // State to verify callback security AND know where to return
+        // Format: tenant:id:slug
+        const state = `tenant:${tenant.id}:${tenantSlug}`;
 
         const params = new URLSearchParams({
             response_type: 'code',
@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
             scope: 'read_write',
             state: state,
             'stripe_user[email]': tenant.email || undefined,
-            'stripe_user[url]': `https://${tenantSlug}.pidelocal.com`, // Approximate
+            'stripe_user[url]': `https://${tenantSlug}.pidelocal.es`, // Best effort
             'stripe_user[business_name]': tenant.name,
-            redirect_uri: `${url.origin}/api/stripe/callback`,
+            redirect_uri: `${rootDomain}/api/stripe/callback`,
         });
 
         return NextResponse.json({
