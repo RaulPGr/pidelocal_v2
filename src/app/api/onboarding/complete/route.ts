@@ -48,36 +48,38 @@ export async function POST(req: Request) {
             }, { status: 500 });
         }
 
-        // 2.5 Verify User Exists in Auth
-        // 2.5 Verify User Exists in Auth
-        const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        // 2.5 Ensure User Exists (Server-Side Registration or Client ID)
+        let finalUserId = userId;
 
-        if (authCheckError || !authUser) {
-            // DIAGNOSTIC 2: Decode JWT to check Project Reference
-            const authHeader = req.headers.get("authorization") || "";
-            let tokenRef = "no-token";
-            try {
-                const token = authHeader.replace("Bearer ", "");
-                const parts = token.split(".");
-                if (parts.length === 3) {
-                    const payload = JSON.parse(atob(parts[1]));
-                    tokenRef = payload.ref || "missing-ref";
+        if (email && password) {
+            // Check if user exists first to avoid error spam
+            const { data: { users: searchUsers } } = await supabaseAdmin.auth.admin.listUsers();
+            const found = searchUsers?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+            if (found) {
+                finalUserId = found.id;
+            } else {
+                // Create user
+                const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                    email: email,
+                    password: password,
+                    email_confirm: true,
+                    user_metadata: { full_name: businessName }
+                });
+
+                if (createError) {
+                    return NextResponse.json({ error: "Error creando usuario: " + createError.message }, { status: 500 });
                 }
-            } catch (e) { tokenRef = "parse-error"; }
-
-            const serverRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.split(".")[0]?.replace("https://", "") || "unknown";
-
-            // List LAST 50 users to ensure we aren't missing it due to pagination
-            const { data: { users: allUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 50 });
-            // Sort by created_at descending to show newest first
-            allUsers?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-            const userSummary = allUsers?.slice(0, 5).map(u => `${u.email} (${u.created_at})`).join(", ");
-
-            console.error("User not found.", authCheckError);
-            return NextResponse.json({
-                error: `Error Auth: User missing. SPLIT BRAIN CHECK -> Client Token Ref: [${tokenRef}] vs Server Ref: [${serverRef}]. Newest DB Users: [${userSummary || "None"}]. ID: ${userId}`
-            }, { status: 500 });
+                finalUserId = newUser.user!.id; // Non-null assertion safe if no error
+            }
+        } else if (userId) {
+            // Verify provided userId exists
+            const { data: { user: authUser }, error: authCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
+            if (authCheckError || !authUser) {
+                return NextResponse.json({ error: `Usuario ID ${userId} no encontrado.` }, { status: 404 });
+            }
+        } else {
+            return NextResponse.json({ error: "No se pudo determinar el usuario." }, { status: 400 });
         }
 
         // 3. Link User as Member (Owner)
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
             .from("business_members")
             .insert({
                 business_id: business.id,
-                user_id: userId,
+                user_id: finalUserId,
                 role: "owner"
             });
 
