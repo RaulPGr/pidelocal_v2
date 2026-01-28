@@ -16,6 +16,7 @@ import { MapPin, Clock, Phone, Star, ArrowDown, Search, ArrowRight, Instagram } 
 import { ALLERGENS } from '@/lib/allergens';
 import ReservationTrigger from '@/components/ReservationTrigger';
 import CategoryNav from '@/components/CategoryNav';
+import { isOpenNow } from '@/lib/opening-hours';
 
 type PageProps = { searchParams: Promise<{ [key: string]: string | string[] | undefined }> };
 
@@ -123,7 +124,7 @@ async function MenuContent({ searchParams }: PageProps) {
 
   if (slug) {
     try {
-      const themeQuery = supabaseAdmin.from("businesses").select("name, theme_config, logo_url, social").eq("slug", slug).maybeSingle();
+      const themeQuery = supabaseAdmin.from("businesses").select("name, theme_config, logo_url, social, opening_hours").eq("slug", slug).maybeSingle();
       const { data: themeRow } = await themeQuery;
       businessLogo = (themeRow as any)?.logo_url ?? null;
       businessName = (themeRow as any)?.name ?? "Restaurante";
@@ -134,6 +135,9 @@ async function MenuContent({ searchParams }: PageProps) {
       // Let's check api/settings/home logic: `enabled: !!social.reservations_enabled`.
       // So default is FALSE.
       reservationsEnabled = !!social?.reservations_enabled;
+
+      const openingHours = (themeRow as any)?.opening_hours || null;
+      var isOpen = isOpenNow(openingHours);
     } catch { }
   }
 
@@ -294,7 +298,11 @@ async function MenuContent({ searchParams }: PageProps) {
             {businessName}
           </h1>
           <p className="text-white/80 text-lg md:text-xl font-medium flex items-center justify-center gap-2">
-            <span className="flex items-center gap-1 text-emerald-400"><Clock className="w-4 h-4" /> Abierto ahora</span>
+            {isOpen ? (
+              <span className="flex items-center gap-1 text-emerald-400"><Clock className="w-4 h-4" /> Abierto ahora</span>
+            ) : (
+              <span className="flex items-center gap-1 text-rose-400"><Clock className="w-4 h-4" /> Cerrado</span>
+            )}
           </p>
         </div>
 
