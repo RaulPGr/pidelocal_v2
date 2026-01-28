@@ -251,12 +251,21 @@ export async function GET(req: Request) {
   let categories: any[] | null = null; let catErr: any = null;
   try {
     const bidX = await getCachedBusinessId();
-    let q = supabase.from('categories').select('*')
-      .order('sort_order', { ascending: true })
-      .order('name', { ascending: true });
-    const { data: cats, error } = bidX ? await q.eq('business_id', bidX) : await q;
-    categories = cats as any[] | null;
-    catErr = error;
+    // Use supabaseAdmin to bypass potential RLS issues with sort_order visibility
+    // SECURITY: Must enforce business_id check because Admin client has no RLS.
+    if (bidX) {
+      const { data: cats, error } = await supabaseAdmin
+        .from('categories')
+        .select('*')
+        .eq('business_id', bidX)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+      categories = cats as any[] | null;
+      catErr = error;
+    } else {
+      // If we can't identify the business, return empty categories for security.
+      categories = [];
+    }
   } catch (e) { catErr = e; }
 
   // Fallback: si la consulta pública no devuelve categorías, intentamos con admin.
