@@ -75,28 +75,21 @@ export default function CategoriesManager({ categories, onUpdate }: Props) {
     async function saveOrder(newItems: Category[]) {
         try {
             const payload = newItems.map((c, index) => ({ id: c.id, sort_order: index }));
-            // Batch update endpoint for categories reorder would be ideal, 
-            // but if not exists, we loop (or create one). 
-            // For now, let's assume we use the existing patch route in a loop or a new batch route.
-            // To be safe and efficient, let's implement a loop here or ask backend for batch.
-            // Since we implemented batch for products, we SHOULD have one for categories or create it.
-            // Let's use the single PATCH for now to be safe, but fire and forget mostly.
 
-            // Better approach: Create a reorder endpoint or use existing.
-            // Let's try sending individually for now, but debounce if possible.
-            // Actually, let's use the existing single PATCH endpoint.
-
-            await Promise.all(payload.map(p =>
-                fetch('/api/admin/categories', {
+            // Execute sequentially to avoid race conditions/locks on the server
+            for (const p of payload) {
+                await fetch('/api/admin/categories', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: p.id, sort_order: p.sort_order })
-                })
-            ));
+                });
+            }
 
             onUpdate();
         } catch (e) {
             toast.error("Error al guardar el orden");
+            // Reload to revert to server state
+            onUpdate();
         }
     }
 
