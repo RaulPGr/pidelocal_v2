@@ -24,8 +24,8 @@ async function assertAdminOrMember(): Promise<{ ok: true } | { ok: false; res: R
       {
         cookies: {
           get: (n: string) => cookieStore.get(n)?.value,
-          set: (n: string, v: string, o: any) => { try { cookieStore.set({ name: n, value: v, ...o }); } catch {} },
-          remove: (n: string, o: any) => { try { cookieStore.set({ name: n, value: '', ...o, maxAge: 0 }); } catch {} },
+          set: (n: string, v: string, o: any) => { try { cookieStore.set({ name: n, value: v, ...o }); } catch { } },
+          remove: (n: string, o: any) => { try { cookieStore.set({ name: n, value: '', ...o, maxAge: 0 }); } catch { } },
         },
       }
     );
@@ -50,7 +50,7 @@ async function assertAdminOrMember(): Promise<{ ok: true } | { ok: false; res: R
             allowed = !!mm;
           }
         }
-      } catch {}
+      } catch { }
     }
     if (!allowed) return { ok: false, res: NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 }) };
     return { ok: true };
@@ -90,10 +90,23 @@ export async function POST(req: Request) {
   const slug = await getTenantSlug();
   const bid = await getBusinessIdBySlug(slug);
   if (!bid) return NextResponse.json({ ok: false, error: 'Negocio no encontrado' }, { status: 400 });
-  let body: any = null; try { body = await req.json(); } catch {}
+  let body: any = null; try { body = await req.json(); } catch { }
   const name = String(body?.name || '').trim();
-  const sort_order = body?.sort_order == null ? null : Number(body.sort_order);
-  if (!name) return NextResponse.json({ ok: false, error: 'Nombre requerido' }, { status: 400 });
+  let sort_order = body?.sort_order == null ? null : Number(body.sort_order);
+
+  // If no sort_order provided, calculate the next one
+  if (sort_order === null) {
+    const { data: maxRow } = await supabaseAdmin
+      .from('categories')
+      .select('sort_order')
+      .eq('business_id', bid)
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const maxOrder = (maxRow as any)?.sort_order ?? 0;
+    sort_order = maxOrder + 1;
+  }
+
   const { data, error } = await supabaseAdmin
     .from('categories')
     .insert({ name, sort_order, business_id: bid })
@@ -109,7 +122,7 @@ export async function PATCH(req: Request) {
   const slug = await getTenantSlug();
   const bid = await getBusinessIdBySlug(slug);
   if (!bid) return NextResponse.json({ ok: false, error: 'Negocio no encontrado' }, { status: 400 });
-  let body: any = null; try { body = await req.json(); } catch {}
+  let body: any = null; try { body = await req.json(); } catch { }
   const id = Number(body?.id);
   if (!id) return NextResponse.json({ ok: false, error: 'id requerido' }, { status: 400 });
   const updates: any = {};
@@ -154,7 +167,7 @@ export async function DELETE(req: Request) {
       .eq('business_id', bid)
       .eq('category_id', id)
       .eq('active', false as any);
-  } catch {}
+  } catch { }
 
   const { error } = await supabaseAdmin
     .from('categories')
